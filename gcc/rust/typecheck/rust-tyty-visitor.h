@@ -29,6 +29,8 @@ class TyVisitor
 public:
   virtual void visit (UnitType &type) {}
   virtual void visit (InferType &type) {}
+  virtual void visit (StructFieldType &type) {}
+  virtual void visit (ADTType &type) {}
   virtual void visit (FnType &type) {}
   virtual void visit (ParamType &type) {}
   virtual void visit (ArrayType &type) {}

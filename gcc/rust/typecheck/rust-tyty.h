@@ -41,6 +41,7 @@ enum TypeKind
   UINT,
   FLOAT,
   UNIT,
+  FIELD,
   // there are more to add...
 };
 
@@ -93,6 +94,49 @@ public:
   std::string as_string () const override;
 
   TyBase *combine (TyBase *other) override;
+};
+
+class StructFieldType : public TyBase
+{
+public:
+  StructFieldType (HirId ref, std::string name, TyBase *ty)
+    : TyBase (ref, TypeKind::FIELD), name (name), ty (ty)
+  {}
+
+  void accept_vis (TyVisitor &vis) override;
+
+  bool is_unit () const override { return ty->is_unit (); }
+
+  std::string as_string () const override;
+
+  TyBase *combine (TyBase *other) override;
+
+private:
+  std::string name;
+  TyBase *ty;
+};
+
+class ADTType : public TyBase
+{
+public:
+  ADTType (HirId ref, std::string identifier,
+	   std::vector<StructFieldType *> fields)
+    : TyBase (ref, TypeKind::ADT), identifier (identifier), fields (fields)
+  {}
+
+  void accept_vis (TyVisitor &vis) override;
+
+  bool is_unit () const override { return false; }
+
+  std::string as_string () const override;
+
+  TyBase *combine (TyBase *other) override;
+
+  size_t num_fields () const { return fields.size (); }
+
+private:
+  std::string identifier;
+  std::vector<StructFieldType *> fields;
 };
 
 class ParamType : public TyBase

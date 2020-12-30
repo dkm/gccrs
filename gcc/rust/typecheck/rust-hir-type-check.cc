@@ -21,6 +21,7 @@
 #include "rust-hir-type-check-toplevel.h"
 #include "rust-hir-type-check-item.h"
 #include "rust-hir-type-check-expr.h"
+#include "rust-hir-type-check-struct-field.h"
 
 namespace Rust {
 namespace Resolver {
@@ -44,6 +45,16 @@ TypeCheckExpr::visit (HIR::BlockExpr &expr)
     return true;
   });
 }
+
+// RUST_HIR_TYPE_CHECK_STRUCT_FIELD
+
+void
+TypeCheckStructExpr::visit (HIR::StructExprStructFields &struct_expr)
+{}
+
+void
+TypeCheckStructExpr::visit (HIR::PathInExpression &struct_expr)
+{}
 
 } // namespace Resolver
 } // namespace Rust

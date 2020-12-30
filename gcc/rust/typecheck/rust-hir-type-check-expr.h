@@ -24,6 +24,7 @@
 #include "rust-tyty.h"
 #include "rust-tyty-call.h"
 #include "rust-tyty-resolver.h"
+#include "rust-hir-type-check-struct-field.h"
 
 namespace Rust {
 namespace Resolver {
@@ -267,6 +268,11 @@ public:
   void visit (HIR::ArrayElemsCopied &elems)
   {
     infered_array_elems = TypeCheckExpr::Resolve (elems.get_elem_to_copy ());
+  }
+
+  void visit (HIR::StructExprStructFields &struct_expr)
+  {
+    infered = TypeCheckStructExpr::Resolve (&struct_expr);
   }
 
 private:

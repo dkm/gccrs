@@ -3761,7 +3761,7 @@ StructExprStructFields::as_string () const
     }
   else
     {
-      str += struct_base.as_string ();
+      str += struct_base->as_string ();
     }
 
   return str;
