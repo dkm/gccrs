@@ -920,7 +920,6 @@ TARGET_H = $(TM_H) target.h $(TARGET_DEF) insn-modes.h insn-codes.h
 C_TARGET_H = c-family/c-target.h $(C_TARGET_DEF)
 COMMON_TARGET_H = common/common-target.h $(INPUT_H) $(COMMON_TARGET_DEF)
 D_TARGET_H = d/d-target.h $(D_TARGET_DEF)
-RUST_TARGET_H = rust/rust-target.h $(RUST_TARGET_DEF)
 MACHMODE_H = machmode.h mode-classes.def
 HOOKS_H = hooks.h
 HOSTHOOKS_DEF_H = hosthooks-def.h $(HOOKS_H)
@@ -1207,7 +1206,7 @@ CXX_TARGET_OBJS=@cxx_target_objs@
 # Target specific, D specific object file
 D_TARGET_OBJS=@d_target_objs@
 
-# Target specific, D specific object file
+# Target specific, Rust specific object file
 RUST_TARGET_OBJS=@rust_target_objs@
 
 # Target specific, Fortran specific object file
