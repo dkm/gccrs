@@ -7,7 +7,7 @@ on:
       - staging
 
 jobs:
-  build:
+  build-and-check:
 
     runs-on: ubuntu-latest
 
