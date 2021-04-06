@@ -1627,4 +1627,34 @@ class PathExpr : public ExprWithoutBlock
 } // namespace AST
 } // namespace Rust
 
+DEBUG_FUNCTION void debug(const Rust::AST::TokenTree &);
+DEBUG_FUNCTION void debug(const Rust::AST::MacroMatch &);
+DEBUG_FUNCTION void debug(const Rust::AST::Token &);
+DEBUG_FUNCTION void debug(const Rust::AST::PathSegment &);
+DEBUG_FUNCTION void debug(const Rust::AST::SimplePathSegment &);
+DEBUG_FUNCTION void debug(const Rust::AST::SimplePath &);
+DEBUG_FUNCTION void debug(const Rust::AST::AttrInput &);
+DEBUG_FUNCTION void debug(const Rust::AST::MetaItemInner &);
+DEBUG_FUNCTION void debug(const Rust::AST::AttrInputMetaItemContainer &);
+DEBUG_FUNCTION void debug(const Rust::AST::DelimTokenTree &);
+DEBUG_FUNCTION void debug(const Rust::AST::MetaItem &);
+DEBUG_FUNCTION void debug(const Rust::AST::Stmt &);
+DEBUG_FUNCTION void debug(const Rust::AST::Item &);
+DEBUG_FUNCTION void debug(const Rust::AST::Expr &);
+DEBUG_FUNCTION void debug(const Rust::AST::ExprWithoutBlock &);
+DEBUG_FUNCTION void debug(const Rust::AST::IdentifierExpr &);
+DEBUG_FUNCTION void debug(const Rust::AST::Pattern &);
+DEBUG_FUNCTION void debug(const Rust::AST::Type &);
+DEBUG_FUNCTION void debug(const Rust::AST::TypeNoBounds &);
+DEBUG_FUNCTION void debug(const Rust::AST::TypeParamBound &);
+DEBUG_FUNCTION void debug(const Rust::AST::Lifetime &);
+DEBUG_FUNCTION void debug(const Rust::AST::GenericParam &);
+DEBUG_FUNCTION void debug(const Rust::AST::LifetimeParam &);
+DEBUG_FUNCTION void debug(const Rust::AST::MacroItem &);
+DEBUG_FUNCTION void debug(const Rust::AST::TraitItem &);
+DEBUG_FUNCTION void debug(const Rust::AST::InherentImplItem &);
+DEBUG_FUNCTION void debug(const Rust::AST::TraitImplItem &);
+DEBUG_FUNCTION void debug(const Rust::AST::ExternalItem &);
+DEBUG_FUNCTION void debug(const Rust::AST::MacroInvocationSemi &);
+DEBUG_FUNCTION void debug(const Rust::AST::PathExpr &);
 #endif

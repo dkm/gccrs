@@ -757,4 +757,21 @@ public:
 } // namespace HIR
 } // namespace Rust
 
+DEBUG_FUNCTION void debug(const Rust::HIR::Token &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Stmt &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Item &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Expr &);
+DEBUG_FUNCTION void debug(const Rust::HIR::ExprWithoutBlock &);
+DEBUG_FUNCTION void debug(const Rust::HIR::IdentifierExpr &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Pattern &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Type &);
+DEBUG_FUNCTION void debug(const Rust::HIR::TypeNoBounds &);
+DEBUG_FUNCTION void debug(const Rust::HIR::TypeParamBound &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Lifetime &);
+DEBUG_FUNCTION void debug(const Rust::HIR::GenericParam &);
+DEBUG_FUNCTION void debug(const Rust::HIR::LifetimeParam &);
+DEBUG_FUNCTION void debug(const Rust::HIR::MacroItem &);
+DEBUG_FUNCTION void debug(const Rust::HIR::TraitItem &);
+DEBUG_FUNCTION void debug(const Rust::HIR::PathExpr &);
+
 #endif

@@ -1473,4 +1473,29 @@ public:
 } // namespace TyTy
 } // namespace Rust
 
+DEBUG_FUNCTION void debug(const Rust::TyTy::BaseType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::InferType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::ErrorType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::ParamType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::StructFieldType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::TupleType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::SubstitutionParamMapping &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::SubstitutionArg &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::SubstitutionArgumentMappings &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::SubstitutionRef &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::ADTType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::FnType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::FnPtr &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::ArrayType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::BoolType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::IntType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::UintType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::FloatType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::USizeType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::ISizeType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::CharType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::ReferenceType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::StrType &);
+DEBUG_FUNCTION void debug(const Rust::TyTy::TypeKindFormat &);
+
 #endif // RUST_TYTY
