@@ -1401,5 +1401,33 @@ public:
 };
 } // namespace HIR
 } // namespace Rust
+DEBUG_FUNCTION void debug(const Rust::HIR::AttrInput &);
+DEBUG_FUNCTION void debug(const Rust::HIR::TokenTree &);
+DEBUG_FUNCTION void debug(const Rust::HIR::MacroMatch &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Token &);
+DEBUG_FUNCTION void debug(const Rust::HIR::DelimTokenTree &);
+DEBUG_FUNCTION void debug(const Rust::HIR::PathSegment &);
+DEBUG_FUNCTION void debug(const Rust::HIR::SimplePathSegment &);
+DEBUG_FUNCTION void debug(const Rust::HIR::SimplePath &);
+DEBUG_FUNCTION void debug(const Rust::HIR::MetaItemInner &);
+DEBUG_FUNCTION void debug(const Rust::HIR::AttrInputMetaItemContainer &);
+DEBUG_FUNCTION void debug(const Rust::HIR::MetaItem &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Stmt &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Item &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Expr &);
+DEBUG_FUNCTION void debug(const Rust::HIR::ExprWithoutBlock &);
+DEBUG_FUNCTION void debug(const Rust::HIR::IdentifierExpr &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Pattern &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Type &);
+DEBUG_FUNCTION void debug(const Rust::HIR::TypeNoBounds &);
+DEBUG_FUNCTION void debug(const Rust::HIR::TypeParamBound &);
+DEBUG_FUNCTION void debug(const Rust::HIR::Lifetime &);
+DEBUG_FUNCTION void debug(const Rust::HIR::GenericParam &);
+DEBUG_FUNCTION void debug(const Rust::HIR::LifetimeParam &);
+DEBUG_FUNCTION void debug(const Rust::HIR::MacroItem &);
+DEBUG_FUNCTION void debug(const Rust::HIR::TraitItem &);
+DEBUG_FUNCTION void debug(const Rust::HIR::InherentImplItem &);
+DEBUG_FUNCTION void debug(const Rust::HIR::TraitImplItem &);
+DEBUG_FUNCTION void debug(const Rust::HIR::PathExpr &);
 
 #endif

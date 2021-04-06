@@ -1698,3 +1698,113 @@ TypeCheckMethodCallExpr::visit (FnType &type)
 
 } // namespace TyTy
 } // namespace Rust
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::BaseType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::InferType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::ErrorType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::ParamType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::StructFieldType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::TupleType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::SubstitutionParamMapping &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::SubstitutionArg &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::SubstitutionArgumentMappings &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::ADTType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::FnType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::FnPtr &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::ArrayType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::BoolType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::IntType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::UintType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::FloatType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::USizeType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::ISizeType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::CharType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::ReferenceType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
+
+DEBUG_FUNCTION void
+debug(const Rust::TyTy::StrType &p) {
+  std::cerr << p.as_string() << std::endl;
+}
