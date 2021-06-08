@@ -17,6 +17,9 @@
 // <http://www.gnu.org/licenses/>.
 
 #include "rust-hir-type-check.h"
+#include "rust-hir.h"
+#include "rust-session-manager.h"
+#include <string>
 
 namespace Rust {
 namespace Resolver {
@@ -67,6 +70,9 @@ TypeCheckContext::lookup_builtin (std::string name, TyTy::BaseType **type)
 void
 TypeCheckContext::insert_builtin (HirId id, NodeId ref, TyTy::BaseType *type)
 {
+  Session::trace ("Inserting builtin hirId:" + std::to_string (id) + ", nodeId:" + std::to_string(ref) + " for '"
+		  + type->as_string () + "'\n");
+
   node_id_refs[ref] = id;
   resolved[id] = type;
   builtins.push_back (std::unique_ptr<TyTy::BaseType> (type));
@@ -77,8 +83,14 @@ TypeCheckContext::insert_type (const Analysis::NodeMapping &mappings,
 			       TyTy::BaseType *type)
 {
   rust_assert (type != nullptr);
+
   NodeId ref = mappings.get_nodeid ();
   HirId id = mappings.get_hirid ();
+
+  Session::trace ("Inserting type hirId:" + std::to_string (id)
+		  + ", nodeId:" + std::to_string (ref)
+		  + ", for '" + type->as_string () + "'\n");
+
   node_id_refs[ref] = id;
   resolved[id] = type;
 }
@@ -86,12 +98,57 @@ TypeCheckContext::insert_type (const Analysis::NodeMapping &mappings,
 bool
 TypeCheckContext::lookup_type (HirId id, TyTy::BaseType **type)
 {
-  auto it = resolved.find (id);
-  if (it == resolved.end ())
-    return false;
+  Session::trace ("lookup_type for HID " + std::to_string (id));
 
-  *type = it->second;
-  return true;
+  auto it = resolved.find (id);
+  TyTy::BaseType *res;
+
+  if (it == resolved.end ())
+    res = nullptr;
+  else
+    res = it->second;
+
+  *type = res;
+
+  if (res == nullptr)
+    {
+      Session::trace (
+	"... NOT FOUND\n");
+
+      HIR::Item *i = Analysis::Mappings::get ()->lookup_hir_item (0, id);
+
+      HIR::Stmt *s = Analysis::Mappings::get ()->lookup_hir_stmt (0, id);
+      HIR::Type *t = Analysis::Mappings::get ()->lookup_hir_type (0, id);
+      HIR::Expr *e = Analysis::Mappings::get ()->lookup_hir_expr (0, id);
+
+      if (i)
+        {
+	  Session::trace (
+	    " - HIR object :" + i->as_string () + "\n");
+	}
+      else if (s)
+        {
+	  Session::trace (" - HIR object :" + s->as_string () + "\n");
+	}
+      else if (t)
+	{
+	  Session::trace (" - HIR object :" + t->as_string () + "\n");
+	}
+      else if (e)
+	{
+	  Session::trace (" - HIR object :" + e->as_string () + "\n");
+	}
+      else
+	{
+	  Session::trace (" - HIR object :NOT FOUND\n");
+	}
+    }
+  else
+    {
+      Session::trace (
+	"... " + res->as_string () + "\n");
+    }
+  return res != nullptr;
 }
 
 void

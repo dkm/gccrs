@@ -23,6 +23,8 @@
 #include "rust-hir-full.h"
 #include "rust-substitution-mapper.h"
 
+#include "rust-session-manager.h"
+
 namespace Rust {
 namespace Resolver {
 
@@ -119,6 +121,10 @@ public:
     // lookup the Node this resolves to
     NodeId ref;
     auto nid = path.get_mappings ().get_nodeid ();
+
+    Session::trace ("Lookup for TypePath: '" + path.as_string() +
+		    + "', nodeId:" + std::to_string (nid) + "'\n");
+
     if (!resolver->lookup_resolved_type (nid, &ref))
       {
 	rust_fatal_error (path.get_locus (),

@@ -17,8 +17,10 @@
 // <http://www.gnu.org/licenses/>.
 
 #include "rust-hir-map.h"
+#include "rust-session-manager.h"
 #include "rust-ast-full.h"
 #include "rust-hir-full.h"
+#include <string>
 
 namespace Rust {
 namespace Analysis {
@@ -26,7 +28,12 @@ namespace Analysis {
 NodeMapping::NodeMapping (CrateNum crateNum, NodeId nodeId, HirId hirId,
 			  LocalDefId localDefId)
   : crateNum (crateNum), nodeId (nodeId), hirId (hirId), localDefId (localDefId)
-{}
+{
+  Session::trace ("New mapping: C:" + std::to_string (crateNum)
+		  + ", nid:" + std::to_string (nodeId)
+		  + ", hirId:" + std::to_string (hirId)
+		  + ", localDefId:" + std::to_string (localDefId) + "\n");
+}
 
 NodeMapping::~NodeMapping () {}
 
@@ -240,6 +247,8 @@ void
 Mappings::insert_hir_item (CrateNum crateNum, HirId id, HIR::Item *item)
 {
   rust_assert (lookup_hir_item (crateNum, id) == nullptr);
+  Session::trace ("Inserting new HIR item in crate " + std::to_string(crateNum)
+                  + " HirId: " + std::to_string (id) + " : " + item->as_string () + "\n");
 
   hirItemMappings[crateNum][id] = item;
   nodeIdToHirMappings[crateNum][item->get_mappings ().get_nodeid ()] = id;
@@ -286,6 +295,10 @@ Mappings::insert_hir_implitem (CrateNum crateNum, HirId id,
 			       HirId parent_impl_id, HIR::ImplItem *item)
 {
   rust_assert (lookup_hir_implitem (crateNum, id, nullptr) == nullptr);
+
+  Session::trace ("Inserting new HIR implitem in crate " + std::to_string(crateNum)
+                  + " HirId: " + std::to_string (id) + " : " + item->as_string () + "\n");
+
   hirImplItemMappings[crateNum][id]
     = std::pair<HirId, HIR::ImplItem *> (parent_impl_id, item);
   nodeIdToHirMappings[crateNum][item->get_impl_mappings ().get_nodeid ()] = id;
@@ -313,6 +326,9 @@ Mappings::lookup_hir_implitem (CrateNum crateNum, HirId id,
 void
 Mappings::insert_hir_expr (CrateNum crateNum, HirId id, HIR::Expr *expr)
 {
+  Session::trace ("Inserting new HIR expr in crate " + std::to_string(crateNum)
+                  + " HirId: " + std::to_string (id) + " : " + expr->as_string () + "\n");
+
   hirExprMappings[crateNum][id] = expr;
   nodeIdToHirMappings[crateNum][expr->get_mappings ().get_nodeid ()] = id;
   insert_location (crateNum, id, expr->get_locus_slow ());
@@ -337,6 +353,9 @@ Mappings::insert_hir_type (CrateNum crateNum, HirId id, HIR::Type *type)
 {
   rust_assert (lookup_hir_type (crateNum, id) == nullptr);
 
+  Session::trace ("Inserting new HIR type in crate " + std::to_string(crateNum)
+                  + " HirId: " + std::to_string (id) + " : " + type->as_string () + "\n");
+
   hirTypeMappings[crateNum][id] = type;
   nodeIdToHirMappings[crateNum][type->get_mappings ().get_nodeid ()] = id;
 }
@@ -356,12 +375,15 @@ Mappings::lookup_hir_type (CrateNum crateNum, HirId id)
 }
 
 void
-Mappings::insert_hir_stmt (CrateNum crateNum, HirId id, HIR::Stmt *type)
+Mappings::insert_hir_stmt (CrateNum crateNum, HirId id, HIR::Stmt *stmt)
 {
   rust_assert (lookup_hir_stmt (crateNum, id) == nullptr);
 
-  hirStmtMappings[crateNum][id] = type;
-  nodeIdToHirMappings[crateNum][type->get_mappings ().get_nodeid ()] = id;
+  Session::trace ("Inserting new HIR stmt in crate " + std::to_string(crateNum)
+                  + " HirId: " + std::to_string (id) + " : " + stmt->as_string () + "\n");
+
+  hirStmtMappings[crateNum][id] = stmt;
+  nodeIdToHirMappings[crateNum][stmt->get_mappings ().get_nodeid ()] = id;
 }
 
 HIR::Stmt *

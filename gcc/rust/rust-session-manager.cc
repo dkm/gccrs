@@ -23,6 +23,9 @@
 #include "rust-diagnostics.h"
 #include "diagnostic.h"
 #include "input.h"
+#include <fstream>
+#include <sstream>
+#include <string>
 
 #include "target.h"
 #include "tm.h"
@@ -76,6 +79,38 @@ const char *kTargetOptionsDumpFile = "gccrs.target-options.dump";
 const std::string kDefaultCrateName = "TestCrate";
 
 // Implicitly enable a target_feature (and recursively enable dependencies).
+unsigned Session::trace_idx = 0;
+std::ofstream *Session::trace_out = nullptr;
+
+void
+Session::trace (std::string message)
+{
+  if (trace_out != nullptr)
+    {
+      *trace_out << message;
+      trace_out->flush ();
+    }
+}
+
+void
+Session::start_trace (std::string name)
+{
+  if (trace_out != nullptr)
+    stop_trace ();
+  trace_out = new std::ofstream ("rust-dump." + std::to_string (trace_idx++)
+				 + "." + name);
+}
+
+void
+Session::stop_trace (void)
+{
+  if (trace_out != nullptr)
+    {
+      trace_out->close ();
+      delete trace_out;
+    }
+}
+
 void
 Session::implicitly_enable_feature (std::string feature_name)
 {
@@ -479,6 +514,8 @@ Session::parse_file (const char *filename)
   Lexer lex (filename, std::move (file_wrap), linemap);
   Parser<Lexer> parser (std::move (lex));
 
+  start_trace ("lexer");
+
   // generate crate from parser
   auto parsed_crate = parser.parse_crate ();
 
@@ -500,7 +537,10 @@ Session::parse_file (const char *filename)
     }
 
   if (saw_errors ())
-    return;
+    {
+      stop_trace ();
+      return;
+    }
 
   /* basic pipeline:
    *  - lex
@@ -545,6 +585,8 @@ Session::parse_file (const char *filename)
       rust_debug ("END POST-EXPANSION AST DUMP");
     }
 
+  start_trace ("nameresolution");
+
   // resolution pipeline stage
   Resolver::NameResolution::Resolve (parsed_crate);
   if (options.dump_option_enabled (CompileOptions::RESOLUTION_DUMP))
@@ -553,7 +595,12 @@ Session::parse_file (const char *filename)
     }
 
   if (saw_errors ())
-    return;
+    {
+      stop_trace ();
+      return;
+    }
+
+  start_trace ("ast2hir");
 
   // lower AST to HIR
   HIR::Crate hir = HIR::ASTLowering::Resolve (parsed_crate);
@@ -563,7 +610,12 @@ Session::parse_file (const char *filename)
     }
 
   if (saw_errors ())
-    return;
+    {
+      stop_trace ();
+      return;
+    }
+
+  start_trace ("typeresolution");
 
   // type resolve
   Resolver::TypeResolution::Resolve (hir);
@@ -572,34 +624,56 @@ Session::parse_file (const char *filename)
       dump_type_resolution (hir);
     }
 
+  start_trace ("liveness");
+
   // liveness analysis
   std::set<HirId> live_symbols = Analysis::MarkLive::Analysis (hir);
 
   if (saw_errors ())
-    return;
+    {
+      stop_trace ();
+      return;
+    }
+
+  start_trace ("deadcode");
 
   // scan dead code
   Analysis::ScanDeadcode::Scan (hir, live_symbols);
 
   if (saw_errors ())
-    return;
+    {
+      stop_trace ();
+      return;
+    }
+
+  start_trace ("unused");
 
   // scan unused has to be done after type resolution since methods are resolved
   // at that point
   Resolver::ScanUnused::Scan ();
 
   if (saw_errors ())
-    return;
+    {
+      stop_trace ();
+      return;
+    }
+
+  start_trace ("compile");
 
   // do compile
   Compile::Context ctx (backend);
   Compile::CompileCrate::Compile (hir, &ctx);
 
   if (saw_errors ())
-    return;
+    {
+      stop_trace ();
+      return;
+    }
 
   // pass to GCC
   ctx.write_to_backend ();
+
+  stop_trace ();
 }
 
 // TODO: actually implement method

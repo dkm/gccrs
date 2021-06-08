@@ -16,6 +16,7 @@
 // along with GCC; see the file COPYING3.  If not see
 // <http://www.gnu.org/licenses/>.
 
+#include "rust-session-manager.h"
 #include "rust-ast-resolve.h"
 #include "rust-ast-full.h"
 #include "rust-tyty.h"
@@ -203,6 +204,8 @@ Resolver::insert_new_definition (NodeId id, Definition def)
   auto it = name_definitions.find (id);
   rust_assert (it == name_definitions.end ());
 
+  Session::trace ("Inserting new definition : " + std::to_string(id) + " -> " + std::to_string(def.parent) + "\n");
+
   name_definitions[id] = def;
 }
 
@@ -221,6 +224,7 @@ void
 Resolver::insert_resolved_name (NodeId refId, NodeId defId)
 {
   auto it = resolved_names.find (refId);
+  Session::trace ("Inserting resolved name : " + std::to_string(refId) + " -> " + std::to_string(defId) + (it == resolved_names.end () ? "" : " ALREADY PRESENT!!!") + "\n");
   rust_assert (it == resolved_names.end ());
 
   resolved_names[refId] = defId;
@@ -242,6 +246,7 @@ void
 Resolver::insert_resolved_type (NodeId refId, NodeId defId)
 {
   auto it = resolved_types.find (refId);
+  Session::trace ("Inserting resolved type : " + std::to_string(refId) + " -> " + std::to_string(defId) + (it == resolved_types.end () ? "" : " ALREADY PRESENT!!!") + "\n");
   rust_assert (it == resolved_types.end ());
 
   resolved_types[refId] = defId;
@@ -263,6 +268,7 @@ void
 Resolver::insert_resolved_label (NodeId refId, NodeId defId)
 {
   auto it = resolved_labels.find (refId);
+  Session::trace ("Inserting resolved label : " + std::to_string(refId) + " -> " + std::to_string(defId) +  (it == resolved_labels.end () ? "" : " ALREADY PRESENT!!!") +"\n");
   rust_assert (it == resolved_labels.end ());
 
   resolved_labels[refId] = defId;
@@ -544,6 +550,8 @@ ResolvePath::resolve_path (AST::PathInExpression *expr)
 
       if (resolver->get_name_scope ().lookup (path, &resolved_node))
 	{
+          Session::trace ("Resolved full path (name) : " + path.get() + " -> " + std::to_string(resolved_node) + "\n");
+
 	  resolver->insert_resolved_name (seg.get_node_id (), resolved_node);
 	  resolver->insert_new_definition (seg.get_node_id (),
 					   Definition{expr->get_node_id (),
@@ -553,6 +561,7 @@ ResolvePath::resolve_path (AST::PathInExpression *expr)
       else if (resolver->get_type_scope ().lookup (path, &resolved_node))
 	{
 	  segment_is_type = true;
+          Session::trace ("Resolved full path (type): " + path.get() + " -> " + std::to_string(resolved_node) + "\n");
 	  resolver->insert_resolved_type (seg.get_node_id (), resolved_node);
 	  resolver->insert_new_definition (seg.get_node_id (),
 					   Definition{expr->get_node_id (),
@@ -624,6 +633,15 @@ ResolveType::visit (AST::ArrayType &type)
 {
   type.get_elem_type ()->accept_vis (*this);
   ResolveExpr::go (type.get_size_expr ().get (), type.get_node_id ());
+}
+
+
+unsigned Rust::Resolver::Rib::next_rib_id = 0;
+
+DEBUG_FUNCTION void
+debug(const CanonicalPath &p)
+{
+  std::cerr << p.get () << std::endl;
 }
 
 } // namespace Resolver

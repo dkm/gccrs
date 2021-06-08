@@ -19,6 +19,7 @@
 #ifndef RUST_AST_LOWER_ITEM
 #define RUST_AST_LOWER_ITEM
 
+#include "rust-session-manager.h"
 #include "rust-diagnostics.h"
 
 #include "rust-ast-lower-base.h"
@@ -56,10 +57,16 @@ public:
 
   void visit (AST::ModuleBodied &module) override
   {
+    Session::trace ("Lowering ModuleBodied\n");
+
     auto crate_num = mappings->get_current_crate ();
+
     Analysis::NodeMapping mapping (crate_num, module.get_node_id (),
 				   mappings->get_next_hir_id (crate_num),
 				   mappings->get_next_localdef_id (crate_num));
+
+    Session::trace (" - HID : " + std::to_string(mapping.get_hirid ()) + "\n");
+    Session::trace (" - LID : " + std::to_string(mapping.get_local_defid ()) + "\n");
 
     // should be lowered from module.get_vis()
     HIR::Visibility vis = HIR::Visibility::create_public ();
@@ -82,6 +89,7 @@ public:
 			       std::move (inner_attrs),
 			       std::move (outer_attrs));
 
+    Session::trace ("Adding mapping to crate mappings\n");
     mappings->insert_defid_mapping (mapping.get_defid (), translated);
     mappings->insert_hir_item (mapping.get_crate_num (), mapping.get_hirid (),
 			       translated);

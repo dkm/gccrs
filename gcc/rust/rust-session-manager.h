@@ -28,6 +28,9 @@
 #include "coretypes.h"
 #include "options.h"
 
+#include <fstream>
+#include <sstream>
+
 namespace Rust {
 // parser forward decl
 template <typename ManagedTokenSource> class Parser;
@@ -220,6 +223,9 @@ struct Session
   // backend linemap
   Linemap *linemap;
 
+  static unsigned trace_idx;
+  static std::ofstream *trace_out;
+
 public:
   /* Initialise compiler session. Corresponds to langhook grs_langhook_init().
    * Note that this is called after option handling. */
@@ -229,6 +235,10 @@ public:
 		      const struct cl_option_handlers *handlers);
   void parse_files (int num_files, const char **files);
   void init_options ();
+
+  static void start_trace (std::string name);
+  static void stop_trace (void);
+  static void trace (std::string message);
 
 private:
   void parse_file (const char *filename);

@@ -27,6 +27,9 @@
 #include "rust-hir-path-probe.h"
 #include "rust-substitution-mapper.h"
 #include "rust-hir-const-fold.h"
+#include "rust-session-manager.h"
+#include <string>
+
 
 namespace Rust {
 namespace Resolver {
@@ -1100,6 +1103,9 @@ private:
 				     NodeId *root_resolved_node_id)
   {
     TyTy::BaseType *root_tyty = nullptr;
+
+    Session::trace ("Resolve root path for " + expr.as_string() + "\n");
+
     *offset = 0;
     for (size_t i = 0; i < expr.get_num_segments (); i++)
       {
@@ -1107,6 +1113,9 @@ private:
 	bool have_more_segments = (expr.get_num_segments () - 1 != i);
 	bool is_root = *offset == 0;
 	NodeId ast_node_id = seg.get_mappings ().get_nodeid ();
+
+        Session::trace (" - resolving '" + seg.as_string () + "' for node id: "
+                 + std::to_string(ast_node_id) + "\n");
 
 	// then lookup the reference_node_id
 	NodeId ref_node_id = UNKNOWN_NODEID;
@@ -1123,10 +1132,18 @@ private:
 		return new TyTy::ErrorType (expr.get_mappings ().get_hirid ());
 	      }
 	    ref_node_id = def.parent;
+
+	    Session::trace (" - " + std::to_string (ast_node_id)
+			    + ": named resolved as (definition) "
+			    + std::to_string (ref_node_id) + "\n");
 	  }
 	else
 	  {
 	    resolver->lookup_resolved_type (ast_node_id, &ref_node_id);
+
+	    Session::trace (" - " + std::to_string (ast_node_id)
+			    + ": named resolved as (type)"
+			    + std::to_string (ref_node_id) + "\n");
 	  }
 
         // ref_node_id is the NodeId that the segments refers to.

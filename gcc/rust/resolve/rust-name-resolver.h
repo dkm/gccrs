@@ -22,6 +22,8 @@
 #include "rust-system.h"
 #include "rust-hir-map.h"
 #include "rust-hir-type-check.h"
+#include "rust-session-manager.h"
+#include <string>
 
 namespace Rust {
 namespace Resolver {
@@ -96,7 +98,7 @@ public:
   // Rust uses local_def_ids assigned by def_collector on the AST
   // lets use NodeId instead
   Rib (CrateNum crateNum, NodeId node_id)
-    : crate_num (crateNum), node_id (node_id)
+    : rib_id (next_rib_id++), crate_num (crateNum), node_id (node_id)
   {}
 
   ~Rib () {}
@@ -105,6 +107,10 @@ public:
     const CanonicalPath &path, NodeId id, Location locus, bool shadow,
     std::function<void (const CanonicalPath &, NodeId, Location)> dup_cb)
   {
+    Session::trace ("RIB " + std::to_string(rib_id)
+                    + " inserting name: " + path.get ()
+		    + " | NID: " + std::to_string (id) + "\n");
+
     auto it = mappings.find (path);
     bool already_exists = it != mappings.end ();
     if (already_exists && !shadow)
@@ -129,12 +135,20 @@ public:
 
   bool lookup_name (const CanonicalPath &ident, NodeId *id)
   {
-    auto it = mappings.find (ident);
-    if (it == mappings.end ())
-      return false;
+    Session::trace ("RIB " + std::to_string (rib_id) + " lookup_name: "
+		    + ident.get () + "...");
 
-    *id = it->second;
-    return true;
+    auto it = mappings.find (ident);
+    bool found = false;
+
+    if (it != mappings.end ())
+      {
+	*id = it->second;
+        found = true;
+      }
+    Session::trace (" " + std::to_string(found) + "\n");
+
+    return found;
   }
 
   bool lookup_canonical_path (const NodeId &id, CanonicalPath *ident)
@@ -212,6 +226,9 @@ public:
   }
 
 private:
+  static unsigned next_rib_id;
+  unsigned rib_id;
+
   CrateNum crate_num;
   NodeId node_id;
   std::map<CanonicalPath, NodeId> mappings;
@@ -254,6 +271,9 @@ public:
     return lookup != UNKNOWN_NODEID;
   }
 
+  // Iterate over Rib-s from top to bottom and invoke cb.
+  // If cb returns true, continue to iterate over Ribs.
+  // If cb returns false, stop iterating.
   void iterate (std::function<bool (Rib *)> cb)
   {
     for (auto it = stack.rbegin (); it != stack.rend (); ++it)
