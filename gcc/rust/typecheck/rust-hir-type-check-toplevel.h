@@ -19,6 +19,7 @@
 #ifndef RUST_HIR_TYPE_CHECK_TOPLEVEL
 #define RUST_HIR_TYPE_CHECK_TOPLEVEL
 
+#include "rust-hir-full-decls.h"
 #include "rust-hir-type-check-base.h"
 #include "rust-hir-full.h"
 #include "rust-hir-type-check-implitem.h"

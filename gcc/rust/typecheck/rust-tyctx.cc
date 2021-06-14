@@ -19,6 +19,7 @@
 #include "rust-hir-type-check.h"
 #include "rust-hir.h"
 #include "rust-session-manager.h"
+#include "rust-tyty.h"
 #include <string>
 
 namespace Rust {

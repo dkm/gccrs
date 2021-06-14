@@ -74,7 +74,7 @@ const char *kHIRDumpFile = "gccrs.hir.dump";
 const char *kHIRTypeResolutionDumpFile = "gccrs.type-resolution.dump";
 const char *kTargetOptionsDumpFile = "gccrs.target-options.dump";
 
-// FIME in the imports/visibility milestone - this needs to be command line
+// FIXME in the imports/visibility milestone - this needs to be command line
 // option
 const std::string kDefaultCrateName = "TestCrate";
 
