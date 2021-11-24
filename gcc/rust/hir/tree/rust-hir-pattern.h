@@ -54,7 +54,7 @@ public:
 
   Location get_locus () const { return locus; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -124,7 +124,7 @@ public:
 
   bool is_mut () const { return mut == Mutability::Mut; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -147,7 +147,7 @@ public:
 
   Location get_locus () const { return locus; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -173,7 +173,7 @@ public:
 
   virtual std::string as_string () const = 0;
 
-  virtual void accept_vis (HIRVisitor &vis) = 0;
+  virtual void accept_vis (HIRFullVisitor &vis) = 0;
 
 protected:
   // pure virtual as RangePatternBound is abstract
@@ -203,7 +203,7 @@ public:
 
   Location get_locus () const { return locus; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -229,7 +229,7 @@ public:
 
   Location get_locus () const { return path.get_locus (); }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -257,7 +257,7 @@ public:
 
   Location get_locus () const { return path.get_locus (); }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -315,7 +315,7 @@ public:
 
   Location get_locus () const { return locus; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -366,7 +366,7 @@ public:
 
   bool is_mut () const { return mut == Mutability::Mut; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -417,7 +417,7 @@ public:
 
   Location get_locus () const { return locus; }
 
-  virtual void accept_vis (HIRVisitor &vis) = 0;
+  virtual void accept_vis (HIRFullVisitor &vis) = 0;
 
 protected:
   StructPatternField (AST::AttrVec outer_attribs, Location locus)
@@ -467,7 +467,7 @@ public:
 
   std::string as_string () const override;
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -517,7 +517,7 @@ public:
 
   std::string as_string () const override;
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -546,7 +546,7 @@ public:
 
   bool is_mut () const { return mut == Mutability::Mut; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -662,7 +662,7 @@ public:
 
   Location get_locus () const { return path.get_locus (); }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -689,7 +689,7 @@ public:
 
   virtual std::string as_string () const = 0;
 
-  virtual void accept_vis (HIRVisitor &vis) = 0;
+  virtual void accept_vis (HIRFullVisitor &vis) = 0;
 
 protected:
   // pure virtual clone implementation
@@ -731,7 +731,7 @@ public:
 
   std::string as_string () const override;
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -787,7 +787,7 @@ public:
 
   std::string as_string () const override;
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -835,7 +835,7 @@ public:
 
   Location get_locus () const { return path.get_locus (); }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -863,7 +863,7 @@ public:
 
   virtual std::string as_string () const = 0;
 
-  virtual void accept_vis (HIRVisitor &vis) = 0;
+  virtual void accept_vis (HIRFullVisitor &vis) = 0;
 
 protected:
   // pure virtual clone implementation
@@ -940,7 +940,7 @@ public:
 
   std::string as_string () const override;
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -998,7 +998,7 @@ public:
 
   std::string as_string () const override;
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -1043,7 +1043,7 @@ public:
 
   Location get_locus () const { return locus; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -1091,7 +1091,7 @@ public:
 
   Location get_locus () const { return locus; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather
@@ -1141,7 +1141,7 @@ public:
 
   Location get_locus () const { return locus; }
 
-  void accept_vis (HIRVisitor &vis) override;
+  void accept_vis (HIRFullVisitor &vis) override;
 
 protected:
   /* Use covariance to implement clone function as returning this object rather

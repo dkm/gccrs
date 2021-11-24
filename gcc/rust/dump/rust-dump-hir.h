@@ -14,8 +14,10 @@
 namespace Rust {
 namespace Dump {
 
-class DumpHIR : public HIR::HIRVisitor
+class DumpHIR : public HIR::HIRFullVisitorBase
 {
+  using Rust::HIR::HIRFullVisitorBase::visit;
+
 public:
   static void dump (HIR::Crate &crate, std::ofstream &out)
   {
@@ -180,13 +182,16 @@ protected:
   DumpHIR (std::ofstream &out, int ind);
 
   void open_tag (std::string tag);
-  void close_tag(bool new_line = false);
+  void close_tag (bool new_line = false);
+  void end_list ();
+  void start_list (std::string list_name = "");
 
   void dump_attr (AST::AttrVec &attrs);
 
   std::ofstream &m_dumpout;
   int m_sawclose;
   int m_indent;
+  std::string m_named_list;
 };
 } // namespace Dump
 } // namespace Rust

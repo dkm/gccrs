@@ -6,7 +6,7 @@ namespace Rust {
 namespace Dump {
 
 DumpHIR::DumpHIR (std::ofstream &out, int ind)
-  : m_dumpout (out), m_sawclose (0), m_indent (ind)
+  : m_dumpout (out), m_sawclose (0), m_indent (ind), m_named_list("")
 {
 }
 
@@ -41,12 +41,38 @@ DumpHIR::close_tag (bool new_line)
 }
 
 void
+DumpHIR::start_list (std::string name)
+{
+  if (name.size() > 0)
+    {
+      m_dumpout << '(' << name;
+      m_named_list = name;
+    }
+
+  m_dumpout << '[';
+}
+
+void
+DumpHIR::end_list ()
+{
+  m_dumpout << ']';
+  if (m_named_list.size () > 0)
+    m_dumpout << ')';
+}
+
+void
 DumpHIR::dump_attr (AST::AttrVec &attrs)
 {
+  if (attrs.empty())
+    return;
+
+  start_list ("outer_attributes");
+
   for (const auto &attr : attrs)
-    m_dumpout << " ["
+    m_dumpout << "["
               << attr.as_string()
               << "] ";
+  end_list();
 }
 
 void
@@ -528,37 +554,32 @@ DumpHIR::visit (HIR::Function &f)
   std::string tag = "function";
 
   if (f.has_function_return_type())
-    tag = tag + ":";
+    {
+      tag = tag + ":" + f.get_return_type()->as_string();
+    }
+
+
   open_tag (tag);
 
   if (f.has_generics())
-    {
-      open_tag ("generics [");
-
-
-      for (const auto &g : f.get_generic_params())
-        g->accept_vis (*this);
-
-      m_dumpout << ']';
-      close_tag();
-    }
+    for (const auto &g : f.get_generic_params())
+      g->accept_vis (*this);
 
   if (f.has_function_params())
     {
-      open_tag ("params [");
+      start_list ("params");
 
+      bool first = true;
       for (const auto &p : f.get_function_params ())
         {
-          m_dumpout << p.get_type ()->as_string ()
-                    << ':'
-                    << p.get_param_name ()->as_string ();
-
-          // very nice way to check if last elt
-          if (&p != &*(f.get_function_params ().cend () -1)){
+          if (!first)
             m_dumpout << ' ';
-          }
+          first = false;
+          m_dumpout << p.get_param_name ()->as_string ()
+                    << ':'
+                    << p.get_type ()->as_string ();
         }
-      m_dumpout << ']';
+      end_list();
       close_tag ();
     }
 
