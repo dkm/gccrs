@@ -21,30 +21,37 @@
 namespace Rust {
 namespace HIR {
 
-Dump::Dump (std::ostream &stream) : stream (stream), indent (0) {}
+Dump::Dump (std::ostream &stream) : stream (stream), m_indent (0) {}
+
+#define PRINT_INDENT stream << std::string (m_indent, m_indent_char)
+
 
 void
 Dump::go (HIR::Crate &crate)
 {
+  PRINT_INDENT;
+
   stream << "Crate"
 	 << " "
 	 << "{" << std::endl;
   //
 
-  indent++;
-  stream << std::string (indent, indent_char);
+  m_indent++;
+  PRINT_INDENT;
+
   stream << "inner_attrs"
 	 << ":"
 	 << " "
 	 << "[";
   for (auto &attr : crate.inner_attrs)
     stream << attr.as_string ();
+
   stream << "]"
 	 << "," << std::endl;
-  indent--;
+  m_indent--;
 
-  indent++;
-  stream << std::string (indent, indent_char);
+  m_indent++;
+  PRINT_INDENT;
   //
 
   stream << "items"
@@ -52,34 +59,39 @@ Dump::go (HIR::Crate &crate)
 	 << " "
 	 << "[";
 
-  stream << std::string (indent, indent_char);
+  PRINT_INDENT;
+
   for (const auto &item : crate.items)
     {
       stream << std::endl;
       item->accept_vis (*this);
     }
-  stream << std::string (indent, indent_char);
+  PRINT_INDENT;
+
   stream << "]"
 	 << "," << std::endl;
-  indent--;
+  m_indent--;
   //
 
-  indent++;
-  stream << std::string (indent, indent_char);
+  m_indent++;
+  PRINT_INDENT;
   stream << "node_mappings"
 	 << ":"
 	 << " "
 	 << "[";
   // TODO: print crate mapping attrs
   stream << "]" << std::endl;
-  indent--;
+  m_indent--;
 
   stream << "}" << std::endl;
 }
 
 void
-Dump::visit (Lifetime &)
-{}
+Dump::visit (Lifetime &lifetime)
+{
+  stream << "'" << lifetime.get_name ();
+}
+
 void
 Dump::visit (LifetimeParam &)
 {}
@@ -108,8 +120,8 @@ Dump::visit (QualifiedPathInType &)
 void
 Dump::visit (LiteralExpr &literal_expr)
 {
-  indent++;
-  stream << std::string (indent, indent_char);
+  m_indent++;
+  PRINT_INDENT;
   stream << "( " + literal_expr.get_literal ().as_string () + " ("
 	      + literal_expr.get_mappings ().as_string () + "))";
   stream << "\n";
@@ -206,11 +218,11 @@ Dump::visit (BlockExpr &)
 	 << ":"
 	 << " "
 	 << "[";
-  indent++;
+  m_indent++;
   // TODO: print statements
   // TODO: print tail expression if exists
   stream << "]";
-  indent--;
+  m_indent--;
 }
 
 void
@@ -324,20 +336,21 @@ void
 Dump::visit (UseDeclaration &)
 {}
 void
-Dump::visit (Function &)
+Dump::visit (Function &fn)
 {
-  indent++;
-  stream << std::string (indent, indent_char);
-  stream << "Function"
-	 << " ";
-  stream << "{" << std::endl;
-  // TODO: print function params
-  stream << std::string (indent, indent_char);
+  m_indent++;
+  PRINT_INDENT;
+
+  stream << "fn " << fn.get_function_name () << "(";
+  for (auto &param : fn.get_function_params())
+    stream << param.get_param_name() << ",";
+  stream << ") -> FOO {" << std::endl;
+  PRINT_INDENT;
   stream << "}" << std::endl;
   // TODO: get function definition and visit block
 
   stream << std::endl;
-  indent--;
+  m_indent--;
 }
 void
 Dump::visit (TypeAlias &)
@@ -382,8 +395,20 @@ void
 Dump::visit (TraitItemType &)
 {}
 void
-Dump::visit (Trait &)
-{}
+Dump::visit (Trait &trait)
+{
+  PRINT_INDENT;
+
+  stream << "trait  " << trait.get_name () << "{" << std::endl;
+
+  for (const auto &item : trait.get_trait_items ())
+    {
+      item->accept_vis (*this);
+    }
+  PRINT_INDENT;
+  stream << "}" << std::endl;
+}
+
 void
 Dump::visit (ImplBlock &)
 {}
