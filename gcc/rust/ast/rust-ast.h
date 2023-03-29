@@ -1554,7 +1554,7 @@ protected:
 
 /* Data structure to store the data used in macro invocations and macro
  * invocations with semicolons. */
-struct MacroInvocData
+class MacroInvocData
 {
 private:
   SimplePath path;
