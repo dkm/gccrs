@@ -35,6 +35,7 @@ namespace Rust {
 
 const BiMap<std::string, BuiltinMacro> MacroBuiltin::builtins = {{
   {"assert", BuiltinMacro::Assert},
+  {"panic", BuiltinMacro::Panic},
   {"file", BuiltinMacro::File},
   {"line", BuiltinMacro::Line},
   {"column", BuiltinMacro::Column},
@@ -78,6 +79,7 @@ const BiMap<std::string, BuiltinMacro> MacroBuiltin::builtins = {{
 std::unordered_map<std::string, AST::MacroTranscriberFunc>
   MacroBuiltin::builtin_transcribers = {
     {"assert", MacroBuiltin::assert_handler},
+    {"panic", MacroBuiltin::panic_handler},
     {"file", MacroBuiltin::file_handler},
     {"line", MacroBuiltin::line_handler},
     {"column", MacroBuiltin::column_handler},
@@ -428,14 +430,18 @@ MacroBuiltin::assert_handler (location_t invoc_locus,
   tokens.push_back (make_token (Token::make (TokenId::IF, invoc_locus)));
   // tokens.push_back (invoc_token_tree.to_token_stream ());
   // copy tokens?
-  tokens.push_back (make_token (Token::make_identifier (invoc_locus, std::string("panic"))));
+  tokens.push_back (
+    make_token (Token::make_identifier (invoc_locus, std::string ("panic"))));
   tokens.push_back (make_token (Token::make (TokenId::EXCLAM, invoc_locus)));
-  tokens.push_back (make_token (Token::make (TokenId::LEFT_PAREN, invoc_locus)));
-  tokens.push_back (make_token (Token::make (TokenId::RIGHT_PAREN, invoc_locus)));
+  tokens.push_back (
+    make_token (Token::make (TokenId::LEFT_PAREN, invoc_locus)));
+  tokens.push_back (
+    make_token (Token::make (TokenId::RIGHT_PAREN, invoc_locus)));
   tokens.push_back (make_token (Token::make (TokenId::SEMICOLON, invoc_locus)));
 
   // auto str_token
-  //   = make_token (Token::make_string (invoc_locus, std::move (current_file)));
+  //   = make_token (Token::make_string (invoc_locus, std::move
+  //   (current_file)));
 
   // auto token = make_token (
   //   Token::make_int (invoc_locus, std::to_string (0)));
@@ -443,43 +449,42 @@ MacroBuiltin::assert_handler (location_t invoc_locus,
   std::vector<std::unique_ptr<AST::Stmt>> stmts;
 
   // Should be panic!()
-  //stmts.push_back (std::unique_ptr<AST::Stmt> (new AST::EmptyStmt(invoc_locus)));
+  // stmts.push_back (std::unique_ptr<AST::Stmt> (new
+  // AST::EmptyStmt(invoc_locus)));
+  // auto path_str = make_macro_path_str (BuiltinMacro::Panic);
 
-  stmts.push_back (std::unique_ptr<AST::ExprStmtWithoutBlock> (
-		     new AST::ExprStmtWithoutBlock (
-		       std::unique_ptr<AST::ExprWithoutBlock> (
-			 new AST::CallExpr (
-			   make_string (invoc_locus, std::string ("panic")),
-			   {}, {}, invoc_locus)),
-		       invoc_locus)));
+  auto callexpr_panic = std::unique_ptr<AST::Expr> (new AST::CallExpr (make_string (invoc_locus, std::string ("panic")),{}, {}, invoc_locus));
+  auto exprstmt_panic = std::unique_ptr<AST::ExprStmt> (new AST::ExprStmt (std::move(callexpr_panic), invoc_locus, true));
 
-  auto if_ptr = std::unique_ptr<AST::ExprWithBlock> (
-    new AST::IfExpr (
-      std::unique_ptr<AST::Expr> (
-	new AST::NegationExpr (
-	  std::move(expr), NegationOperator::NOT,
-	  {}, invoc_locus)),
-      std::unique_ptr<AST::BlockExpr> (
-	new AST::BlockExpr(
-	  //std::vector<std::unique_ptr<AST::Stmt>> (), /* no stmt */
-	  std::move(stmts),
-	  {},
-	  // std::unique_ptr<AST::Expr> (
-	  //   new AST::LiteralExpr (std::to_string (111), AST::Literal::INT,
-	  //                         PrimitiveCoreType::CORETYPE_U32, {}, invoc_locus)),
-	  {}, /* inner_attribs */
-	  {}, /* outer_attribs */
-	  invoc_locus,
-	  invoc_locus)),
-      {} /* outer_attrs */,
-      invoc_locus));
+  stmts.push_back (std::move(exprstmt_panic));
 
-   auto node = AST::SingleASTNode (
-      std::unique_ptr<AST::ExprStmtWithBlock> (
-	new AST::ExprStmtWithBlock(
-	  std::move(if_ptr),
-	  invoc_locus,
-	  false)));
+      // AST::MacroInvocation::Builtin (
+      // 	BuiltinMacro::Panic,
+
+      // 	// FIXME: creating panic!() macro invocation
+      // 	AST::MacroInvocData (
+      // 	  AST::SimplePath ({AST::SimplePathSegment (path_str, invoc_locus)}),
+      // 	  std::move (invoc_token_tree)),
+      // 	{}, invoc_locus,
+      // 	std::vector<std::unique_ptr<AST::MacroInvocation>> ()))
+    //invoc_locus);
+
+  auto if_cond = std::unique_ptr<AST::Expr> (new AST::NegationExpr (
+      std::move (expr), NegationOperator::NOT, {}, invoc_locus));
+  auto if_block = std::unique_ptr<AST::BlockExpr> (new AST::BlockExpr (
+      std::move (stmts), /* block_statements */
+      {}, /* block_expr */
+      {}, /* inner_attribs */
+      {}, /* outer_attribs */
+      invoc_locus, invoc_locus));
+
+  auto if_expr = std::unique_ptr<AST::ExprWithBlock> (new AST::IfExpr (
+    std::move(if_cond),
+    std::move(if_block),
+    {} /* outer_attrs */, invoc_locus));
+
+  auto node = AST::SingleASTNode (std::unique_ptr<AST::ExprStmt> (
+    new AST::ExprStmt (std::move (if_expr), invoc_locus, false)));
 
   // auto node = AST::SingleASTNode (
   //   std::unique_ptr<AST::Expr> (
@@ -496,7 +501,7 @@ MacroBuiltin::assert_handler (location_t invoc_locus,
   //   new AST::LiteralExpr (std::to_string (3), AST::Literal::INT,
   // 			  PrimitiveCoreType::CORETYPE_U32, {}, invoc_locus)));
 
-  return AST::Fragment ({node}, std::move(tokens));
+  return AST::Fragment ({node}, std::move (tokens));
 }
 
 tl::optional<AST::Fragment>
