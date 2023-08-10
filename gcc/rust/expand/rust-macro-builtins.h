@@ -128,7 +128,7 @@ public:
   static tl::optional<AST::Fragment> file_handler (location_t invoc_locus,
 						   AST::MacroInvocData &invoc);
 
-  static tl::optional<AST::Fragment> panic_handler (Location invoc_locus,
+  static tl::optional<AST::Fragment> panic_handler (location_t invoc_locus,
 				       AST::MacroInvocData &invoc);
 
   static tl::optional<AST::Fragment>

@@ -401,6 +401,12 @@ load_file_bytes (location_t invoc_locus, const char *filename)
 } // namespace
 
 tl::optional<AST::Fragment>
+MacroBuiltin::panic_handler (location_t invoc_locus, AST::MacroInvocData &invoc)
+{
+  return AST::Fragment::create_error ();
+}
+
+tl::optional<AST::Fragment>
 MacroBuiltin::assert_handler (location_t invoc_locus,
 			      AST::MacroInvocData &invoc)
 {
@@ -453,7 +459,11 @@ MacroBuiltin::assert_handler (location_t invoc_locus,
   // AST::EmptyStmt(invoc_locus)));
   // auto path_str = make_macro_path_str (BuiltinMacro::Panic);
 
-  auto callexpr_panic = std::unique_ptr<AST::Expr> (new AST::CallExpr (make_string (invoc_locus, std::string ("panic")),{}, {}, invoc_locus));
+  std::vector<AST::PathExprSegment> segment = { AST::PathExprSegment (AST::PathIdentSegment ("panic", invoc_locus), invoc_locus)}; // ["panic"]
+  auto pie = std::unique_ptr<AST::Expr> (new AST::PathInExpression (std::move (segment), {}, invoc_locus));
+
+  auto callexpr_panic = std::unique_ptr<AST::Expr> (
+    new AST::CallExpr (std::move (pie), {}, {}, invoc_locus));
   auto exprstmt_panic = std::unique_ptr<AST::ExprStmt> (new AST::ExprStmt (std::move(callexpr_panic), invoc_locus, true));
 
   stmts.push_back (std::move(exprstmt_panic));
