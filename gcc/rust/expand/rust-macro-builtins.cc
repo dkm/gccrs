@@ -459,25 +459,49 @@ MacroBuiltin::assert_handler (location_t invoc_locus,
   // AST::EmptyStmt(invoc_locus)));
   // auto path_str = make_macro_path_str (BuiltinMacro::Panic);
 
-  std::vector<AST::PathExprSegment> segment = { AST::PathExprSegment (AST::PathIdentSegment ("panic", invoc_locus), invoc_locus)}; // ["panic"]
+  std::vector<AST::PathExprSegment> segment = { AST::PathExprSegment (AST::PathIdentSegment ("abort", invoc_locus), invoc_locus)}; // ["panic"]
   auto pie = std::unique_ptr<AST::Expr> (new AST::PathInExpression (std::move (segment), {}, invoc_locus));
 
-  auto callexpr_panic = std::unique_ptr<AST::Expr> (
-    new AST::CallExpr (std::move (pie), {}, {}, invoc_locus));
-  auto exprstmt_panic = std::unique_ptr<AST::ExprStmt> (new AST::ExprStmt (std::move(callexpr_panic), invoc_locus, true));
+ auto path_str = make_macro_path_str (BuiltinMacro::Panic);
+  // Unsafe call to abort function
+  auto call_expr = std::unique_ptr<AST::Expr> (new AST::CallExpr (std::move (pie), {}, {}, invoc_locus));
+  auto block_expr = std::unique_ptr<AST::BlockExpr> (new AST::BlockExpr (
+      {}, /* block_statements */
+      std::move (call_expr), /* block_expr */
+      {}, /* inner_attribs */
+      {}, /* outer_attribs */
+      invoc_locus, invoc_locus));
+  auto unsafe_block_expr = std::unique_ptr <AST::Expr> (new AST::UnsafeBlockExpr (std::move (block_expr), {}, invoc_locus));
+  auto exprstmt_panic = std::unique_ptr<AST::ExprStmt> (new AST::ExprStmt (std::move(unsafe_block_expr), invoc_locus, true));
+
+  // Regular Call to the abort function
+  // auto callexpr_panic = std::unique_ptr<AST::Expr> (
+  // 	new AST::CallExpr (std::move (pie), {}, {}, invoc_locus));
+  //auto exprstmt_panic = std::unique_ptr<AST::ExprStmt> (new AST::ExprStmt (std::move(callexpr_panic), invoc_locus, true));
+
+  // Macro call [not working]
+ // auto panic_macro_invoc =
+ //   std::unique_ptr<AST::Expr> (
+ //     AST::MacroInvocation::Builtin (
+ //       BuiltinMacro::Panic,
+ //       AST::MacroInvocData (AST::SimplePath ({AST::SimplePathSegment (
+ // 	       path_str, invoc_locus)}),
+ // 	 std::move (invoc_token_tree)),
+ //       {}, invoc_locus, {}));
+  //auto exprstmt_panic = std::unique_ptr<AST::ExprStmt> (new AST::ExprStmt (std::move(panic_macro_invoc), invoc_locus, true));
 
   stmts.push_back (std::move(exprstmt_panic));
 
       // AST::MacroInvocation::Builtin (
-      // 	BuiltinMacro::Panic,
 
-      // 	// FIXME: creating panic!() macro invocation
-      // 	AST::MacroInvocData (
-      // 	  AST::SimplePath ({AST::SimplePathSegment (path_str, invoc_locus)}),
-      // 	  std::move (invoc_token_tree)),
-      // 	{}, invoc_locus,
-      // 	std::vector<std::unique_ptr<AST::MacroInvocation>> ()))
-    //invoc_locus);
+
+    // 	// FIXME: creating panic!() macro invocation
+    // 	AST::MacroInvocData (
+    // 	  AST::SimplePath ({AST::SimplePathSegment (path_str, invoc_locus)}),
+    // 	  std::move (invoc_token_tree)),
+    // 	{}, invoc_locus,
+    // 	std::vector<std::unique_ptr<AST::MacroInvocation>> ()))
+    // invoc_locus);
 
   auto if_cond = std::unique_ptr<AST::Expr> (new AST::NegationExpr (
       std::move (expr), NegationOperator::NOT, {}, invoc_locus));
