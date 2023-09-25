@@ -406,6 +406,28 @@ MacroBuiltin::panic_handler (location_t invoc_locus, AST::MacroInvocData &invoc)
   return AST::Fragment::create_error ();
 }
 
+
+tl::optional<std::vector<std::unique_ptr<AST::Token>>>
+MacroBuiltin::make_tokens_from_string (std::string &data, location_t invoc_locas)
+{
+  Lexer lex (data, Session::get_instance ().linemap);
+
+  std::vector<std::unique_ptr<AST::Token>> tokens;
+  TokenPtr ptr;
+  for (ptr = lex.build_token ();
+       ptr != nullptr && ptr->get_id () != END_OF_FILE;
+       ptr = lex.build_token ())
+    {
+      tokens.emplace_back (make_token (ptr));
+    }
+
+  if (ptr == nullptr)
+    {
+      return tl::nullopt;
+    }
+  return tokens;
+}
+
 tl::optional<AST::Fragment>
 MacroBuiltin::assert_handler (location_t invoc_locus,
 			      AST::MacroInvocData &invoc)
@@ -432,18 +454,36 @@ MacroBuiltin::assert_handler (location_t invoc_locus,
   //   = Session::get_instance ().linemap->location_file (invoc_locus);
 
   // if <expr> { panic ( );}
+  // std::vector<std::unique_ptr<AST::Token>>
+  // auto tokens_opt = make_tokens_from_string("if <expr> { ", invoc_locus);
+  // rust_assert (token);
+  // auto tokens = tokens_opt.take ();
+
+   // FIXME: Insert location pointing to call site in tokens
   std::vector<std::unique_ptr<AST::Token>> tokens;
   tokens.push_back (make_token (Token::make (TokenId::IF, invoc_locus)));
+
+  auto orig_tokens = invoc_token_tree.to_token_stream ();
+  tokens.insert (tokens.end(), std::make_move_iterator(orig_tokens.begin ()),
+                 std::make_move_iterator(orig_tokens.end ()));
   // tokens.push_back (invoc_token_tree.to_token_stream ());
   // copy tokens?
-  tokens.push_back (
-    make_token (Token::make_identifier (invoc_locus, std::string ("panic"))));
-  tokens.push_back (make_token (Token::make (TokenId::EXCLAM, invoc_locus)));
-  tokens.push_back (
-    make_token (Token::make (TokenId::LEFT_PAREN, invoc_locus)));
-  tokens.push_back (
-    make_token (Token::make (TokenId::RIGHT_PAREN, invoc_locus)));
-  tokens.push_back (make_token (Token::make (TokenId::SEMICOLON, invoc_locus)));
+  //
+  std::string body("{ abort(); }");
+  auto footer_tokens_opt = make_tokens_from_string (body, invoc_locus);
+  rust_assert (footer_tokens_opt);
+  //auto footer_tokens = *footer_tokens_opt;
+  tokens.insert (tokens.end(), std::make_move_iterator(footer_tokens_opt.value().begin ()),
+                 std::make_move_iterator(footer_tokens_opt.value().end ()));
+
+  // tokens.push_back (
+  //   make_token (Token::make_identifier (invoc_locus, std::string ("panic"))));
+  // tokens.push_back (make_token (Token::make (TokenId::EXCLAM, invoc_locus)));
+  // tokens.push_back (
+  //   make_token (Token::make (TokenId::LEFT_PAREN, invoc_locus)));
+  // tokens.push_back (
+  //   make_token (Token::make (TokenId::RIGHT_PAREN, invoc_locus)));
+  // tokens.push_back (make_token (Token::make (TokenId::SEMICOLON, invoc_locus)));
 
   // auto str_token
   //   = make_token (Token::make_string (invoc_locus, std::move

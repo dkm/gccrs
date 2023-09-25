@@ -243,6 +243,14 @@ static const std::map<std::string,
 
 Intrinsics::Intrinsics (Context *ctx) : ctx (ctx) {}
 
+/**
+ * Returns a FUNC_DECL corresponding to the intrinsic function FNTYPE. If a
+ * corresponding builtin exists, returns it. If not, search in the generic
+ * intrinsics declared and delegate the return to the corresponding handler.
+ *
+ * @param fntype The Rust function type that should be implemented by the
+ * compiler
+ */
 tree
 Intrinsics::compile (TyTy::FnType *fntype)
 {
