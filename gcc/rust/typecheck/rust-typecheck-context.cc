@@ -18,6 +18,7 @@
 
 #include "rust-hir-type-check.h"
 #include "rust-type-util.h"
+#include "rust-hir-type-check-expr.h"
 
 namespace Rust {
 namespace Resolver {
@@ -409,6 +410,38 @@ TypeCheckContext::lookup_operator_overload (HirId id, TyTy::FnType **call)
 }
 
 void
+TypeCheckContext::insert_deferred_operator_overload (
+  DeferredOpOverload deferred)
+{
+  HirId expr_id = deferred.expr_id;
+  deferred_operator_overloads.emplace (std::make_pair (expr_id, deferred));
+}
+
+bool
+TypeCheckContext::lookup_deferred_operator_overload (
+  HirId id, DeferredOpOverload *deferred)
+{
+  auto it = deferred_operator_overloads.find (id);
+  if (it == deferred_operator_overloads.end ())
+    return false;
+
+  *deferred = it->second;
+  return true;
+}
+
+void
+TypeCheckContext::iterate_deferred_operator_overloads (
+  std::function<bool (HirId, DeferredOpOverload &)> cb)
+{
+  for (auto it = deferred_operator_overloads.begin ();
+       it != deferred_operator_overloads.end (); it++)
+    {
+      if (!cb (it->first, it->second))
+	return;
+    }
+}
+
+void
 TypeCheckContext::insert_unconstrained_check_marker (HirId id, bool status)
 {
   unconstrained[id] = status;
@@ -574,44 +607,77 @@ TypeCheckContext::regions_from_generic_args (const HIR::GenericArgs &args) const
   return regions;
 }
 
+bool
+TypeCheckContext::compute_ambigious_op_overload (HirId id,
+						 DeferredOpOverload &op)
+{
+  rust_debug ("attempting resolution of op overload: %s",
+	      op.predicate.as_string ().c_str ());
+
+  TyTy::BaseType *lhs = nullptr;
+  bool ok = lookup_type (op.op.get_lvalue_mappings ().get_hirid (), &lhs);
+  rust_assert (ok);
+
+  TyTy::BaseType *rhs = nullptr;
+  if (op.op.has_rvalue_mappings ())
+    {
+      bool ok = lookup_type (op.op.get_rvalue_mappings ().get_hirid (), &rhs);
+      rust_assert (ok);
+    }
+
+  TypeCheckExpr::ResolveOpOverload (op.lang_item_type, op.op, lhs, rhs,
+				    op.specified_segment);
+
+  return true;
+}
+
 void
-TypeCheckContext::compute_inference_variables (bool error)
+TypeCheckContext::compute_inference_variables (bool emit_error)
+{
+  iterate_deferred_operator_overloads (
+    [&] (HirId id, DeferredOpOverload &op) mutable -> bool {
+      return compute_ambigious_op_overload (id, op);
+    });
+
+  iterate ([&] (HirId id, TyTy::BaseType *ty) mutable -> bool {
+    return compute_infer_var (id, ty, emit_error);
+  });
+}
+
+bool
+TypeCheckContext::compute_infer_var (HirId id, TyTy::BaseType *ty,
+				     bool emit_error)
 {
   auto &mappings = Analysis::Mappings::get ();
 
-  // default inference variables if possible
-  iterate ([&] (HirId id, TyTy::BaseType *ty) mutable -> bool {
-    // nothing to do
-    if (ty->get_kind () != TyTy::TypeKind::INFER)
-      return true;
-
-    TyTy::InferType *infer_var = static_cast<TyTy::InferType *> (ty);
-    TyTy::BaseType *default_type;
-
-    rust_debug_loc (mappings.lookup_location (id),
-		    "trying to default infer-var: %s",
-		    infer_var->as_string ().c_str ());
-    bool ok = infer_var->default_type (&default_type);
-    if (!ok)
-      {
-	if (error)
-	  rust_error_at (mappings.lookup_location (id), ErrorCode::E0282,
-			 "type annotations needed");
-	return true;
-      }
-
-    auto result
-      = unify_site (id, TyTy::TyWithLocation (ty),
-		    TyTy::TyWithLocation (default_type), UNDEF_LOCATION);
-    rust_assert (result);
-    rust_assert (result->get_kind () != TyTy::TypeKind::ERROR);
-    result->set_ref (id);
-    insert_type (Analysis::NodeMapping (mappings.get_current_crate (), 0, id,
-					UNKNOWN_LOCAL_DEFID),
-		 result);
-
+  // nothing to do
+  if (ty->get_kind () != TyTy::TypeKind::INFER)
     return true;
-  });
+
+  TyTy::InferType *infer_var = static_cast<TyTy::InferType *> (ty);
+  TyTy::BaseType *default_type;
+
+  rust_debug_loc (mappings.lookup_location (id),
+		  "trying to default infer-var: %s",
+		  infer_var->as_string ().c_str ());
+  bool ok = infer_var->default_type (&default_type);
+  if (!ok)
+    {
+      if (emit_error)
+	rust_error_at (mappings.lookup_location (id), ErrorCode::E0282,
+		       "type annotations needed");
+      return true;
+    }
+
+  auto result
+    = unify_site (id, TyTy::TyWithLocation (ty),
+		  TyTy::TyWithLocation (default_type), UNDEF_LOCATION);
+  rust_assert (result);
+  rust_assert (result->get_kind () != TyTy::TypeKind::ERROR);
+  result->set_ref (id);
+  insert_implicit_type (id, result);
+
+  return true;
 }
 
 TyTy::VarianceAnalysis::CrateCtx &

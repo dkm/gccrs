@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Free Software Foundation, Inc.
+// Copyright (C) 2025 Free Software Foundation, Inc.
 
 // This file is part of GCC.
 
@@ -16,10 +16,26 @@
 // along with GCC; see the file COPYING3.  If not see
 // <http://www.gnu.org/licenses/>.
 
-#include "rust-macro.h"
+#include "rust-ggc.h"
+#include "stringpool.h"
 
 namespace Rust {
-namespace AST {
 
-} // namespace AST
+namespace GGC {
+
+Ident::Ident (const char *str) : inner (get_identifier (str)) {}
+
+Ident::Ident (const std::string &str)
+  : inner (get_identifier_with_length (str.c_str (), str.length ()))
+{}
+
+bool
+Ident::operator== (const std::string &other) const
+{
+  // maybe_get_identifier_with_length doesn't seem to exist
+  return maybe_get_identifier (other.c_str ()) == inner;
+}
+
+} // namespace GGC
+
 } // namespace Rust

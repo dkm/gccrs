@@ -1297,6 +1297,28 @@ Dump::visit (BlockExpr &e)
 }
 
 void
+Dump::visit (AnonConst &e)
+{
+  begin ("AnonConst");
+  do_expr (e);
+
+  visit_field ("inner", e.get_inner_expr ());
+
+  end ("AnonConst");
+}
+
+void
+Dump::visit (ConstBlock &e)
+{
+  begin ("ConstBlock");
+  do_expr (e);
+
+  visit_field ("inner", e.get_const_expr ());
+
+  end ("ConstBlock");
+}
+
+void
 Dump::visit (ContinueExpr &e)
 {
   begin ("ContinueExpr");
@@ -1507,7 +1529,74 @@ Dump::visit (AsyncBlockExpr &e)
 
 void
 Dump::visit (InlineAsm &e)
-{}
+{
+  begin ("InlineAsm");
+  do_expr (e);
+  for (auto &temp : e.get_template_ ())
+    {
+      put_field ("template", temp.string);
+    }
+
+  for (auto &temp_str : e.get_template_strs ())
+    {
+      put_field ("template_str", temp_str.symbol);
+    }
+
+  for (auto &operand : e.get_operands ())
+    {
+      switch (operand.get_register_type ())
+	{
+	case HIR::InlineAsmOperand::RegisterType::In:
+	  {
+	    const auto &in = operand.get_in ();
+	    visit_field ("in expr", *in.expr);
+	    break;
+	  }
+	case HIR::InlineAsmOperand::RegisterType::Out:
+	  {
+	    const auto &out = operand.get_out ();
+	    visit_field ("out expr", *out.expr);
+	    break;
+	  }
+	case HIR::InlineAsmOperand::RegisterType::InOut:
+	  {
+	    const auto &inout = operand.get_in_out ();
+	    visit_field ("inout expr", *inout.expr);
+	    break;
+	  }
+	case HIR::InlineAsmOperand::RegisterType::SplitInOut:
+	  {
+	    const auto &inout = operand.get_split_in_out ();
+	    begin ("Split in out");
+	    visit_field ("in expr", *inout.in_expr);
+	    visit_field ("out expr", *inout.out_expr);
+	    end ("Split in out");
+
+	    break;
+	  }
+	case HIR::InlineAsmOperand::RegisterType::Const:
+	  {
+	    auto &cnst = operand.get_const ();
+	    visit_field ("const expr", cnst.anon_const.get_inner_expr ());
+	    break;
+	  }
+	case HIR::InlineAsmOperand::RegisterType::Sym:
+	  {
+	    auto &sym = operand.get_sym ();
+	    visit_field ("sym expr", *sym.expr);
+	    break;
+	  }
+	case HIR::InlineAsmOperand::RegisterType::Label:
+	  {
+	    auto &label = operand.get_label ();
+	    put_field ("label name", label.label_name);
+	    do_expr (*label.expr);
+	    break;
+	  }
+	}
+    }
+  end ("InlineAsm");
+}
 
 void
 Dump::visit (LlvmInlineAsm &e)
@@ -1602,7 +1691,8 @@ Dump::visit (UseTreeGlob &e)
     case UseTreeGlob::PathType::GLOBAL:
       glob = "::*";
       break;
-      case UseTreeGlob::PathType::PATH_PREFIXED: {
+    case UseTreeGlob::PathType::PATH_PREFIXED:
+      {
 	path = e.get_path ().as_string ();
 	glob = "::*";
 	break;
@@ -1630,7 +1720,8 @@ Dump::visit (UseTreeList &e)
     case UseTreeList::PathType::GLOBAL:
       path_type = "::*";
       break;
-      case UseTreeList::PathType::PATH_PREFIXED: {
+    case UseTreeList::PathType::PATH_PREFIXED:
+      {
 	path = e.get_path ().as_string ();
 	path_type = "::*";
 	break;
@@ -1902,7 +1993,8 @@ Dump::visit (ConstantItem &e)
   do_vis_item (e);
   put_field ("identifier", e.get_identifier ().as_string ());
   visit_field ("type", e.get_type ());
-  visit_field ("const_expr", e.get_expr ());
+  if (e.has_expr ())
+    visit_field ("const_expr", e.get_expr ());
   end ("ConstantItem");
 }
 
@@ -2091,10 +2183,10 @@ Dump::visit (IdentifierPattern &e)
   put_field ("is_ref", std::to_string (e.get_is_ref ()));
   put_field ("mut", std::to_string (e.is_mut ()));
 
-  if (e.has_pattern_to_bind ())
-    put_field ("to_bind", e.get_to_bind ().as_string ());
+  if (e.has_subpattern ())
+    visit_field ("subpattern", e.get_subpattern ());
   else
-    put_field ("to_bind", "none");
+    put_field ("subpattern", "none");
 
   end ("IdentifierPattern");
 }
@@ -2172,7 +2264,7 @@ Dump::visit (StructPatternFieldIdentPat &e)
   auto oa = e.get_outer_attrs ();
   do_outer_attrs (oa);
   put_field ("ident", e.get_identifier ().as_string ());
-  put_field ("ident_pattern", e.get_pattern ().as_string ());
+  visit_field ("ident_pattern", e.get_pattern ());
   end ("StructPatternFieldIdentPat");
 }
 
@@ -2290,7 +2382,7 @@ Dump::visit (LetStmt &e)
   auto oa = e.get_outer_attrs ();
   do_outer_attrs (oa);
 
-  put_field ("variable_pattern", e.get_pattern ().as_string ());
+  visit_field ("variable_pattern", e.get_pattern ());
 
   if (e.has_type ())
     visit_field ("type", e.get_type ());

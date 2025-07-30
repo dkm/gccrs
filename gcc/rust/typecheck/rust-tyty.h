@@ -29,6 +29,7 @@
 #include "rust-tyty-region.h"
 #include "rust-system.h"
 #include "rust-hir.h"
+#include "tree.h"
 
 namespace Rust {
 
@@ -78,8 +79,7 @@ enum TypeKind
   ERROR
 };
 
-extern bool
-is_primitive_type_kind (TypeKind kind);
+extern bool is_primitive_type_kind (TypeKind kind);
 
 class TypeKindFormat
 {
@@ -268,8 +268,8 @@ public:
   {}
 
   WARN_UNUSED_RESULT virtual size_t get_num_params () const = 0;
-  WARN_UNUSED_RESULT virtual BaseType *
-  get_param_type_at (size_t index) const = 0;
+  WARN_UNUSED_RESULT virtual BaseType *get_param_type_at (size_t index) const
+    = 0;
   WARN_UNUSED_RESULT virtual BaseType *get_return_type () const = 0;
 };
 
@@ -441,8 +441,6 @@ public:
   std::string get_name () const override final;
 
   bool is_equal (const BaseType &other) const override;
-
-  OpaqueType *handle_substitions (SubstitutionArgumentMappings &mappings);
 };
 
 class StructFieldType
@@ -541,14 +539,15 @@ public:
 
   std::string get_name () const;
 
-  // check that this predicate is object-safe see:
+  // check that this  is object-safe see:
   // https://doc.rust-lang.org/reference/items/traits.html#object-safety
   bool is_object_safe (bool emit_error, location_t locus) const;
 
   void apply_generic_arguments (HIR::GenericArgs *generic_args,
-				bool has_associated_self);
+				bool has_associated_self, bool is_super_trait);
 
-  void apply_argument_mappings (SubstitutionArgumentMappings &arguments);
+  void apply_argument_mappings (SubstitutionArgumentMappings &arguments,
+				bool is_super_trait);
 
   bool contains_item (const std::string &search) const;
 
@@ -595,6 +594,9 @@ private:
   };
 
   TypeBoundPredicate (mark_is_error);
+
+  void get_trait_hierachy (
+    std::function<void (const Resolver::TraitReference &)> callback) const;
 
   DefId reference;
   location_t locus;
@@ -1156,19 +1158,18 @@ class ArrayType : public BaseType
 public:
   static constexpr auto KIND = TypeKind::ARRAY;
 
-  ArrayType (HirId ref, location_t locus, HIR::Expr &capacity_expr, TyVar base,
+  ArrayType (HirId ref, location_t locus, tree capacity, TyVar base,
 	     std::set<HirId> refs = std::set<HirId> ())
     : BaseType (ref, ref, TypeKind::ARRAY,
 		{Resolver::CanonicalPath::create_empty (), locus}, refs),
-      element_type (base), capacity_expr (capacity_expr)
+      element_type (base), capacity (capacity)
   {}
 
-  ArrayType (HirId ref, HirId ty_ref, location_t locus,
-	     HIR::Expr &capacity_expr, TyVar base,
-	     std::set<HirId> refs = std::set<HirId> ())
+  ArrayType (HirId ref, HirId ty_ref, location_t locus, tree capacity,
+	     TyVar base, std::set<HirId> refs = std::set<HirId> ())
     : BaseType (ref, ty_ref, TypeKind::ARRAY,
 		{Resolver::CanonicalPath::create_empty (), locus}, refs),
-      element_type (base), capacity_expr (capacity_expr)
+      element_type (base), capacity (capacity)
   {}
 
   void accept_vis (TyVisitor &vis) override;
@@ -1187,15 +1188,13 @@ public:
 
   BaseType *clone () const final override;
 
-  HIR::Expr &get_capacity_expr () const { return capacity_expr; }
+  tree get_capacity () const { return capacity; }
 
   ArrayType *handle_substitions (SubstitutionArgumentMappings &mappings);
 
 private:
   TyVar element_type;
-  // FIXME: I dont think this should be in tyty - tyty should already be const
-  // evaluated
-  HIR::Expr &capacity_expr;
+  tree capacity;
 };
 
 class SliceType : public BaseType

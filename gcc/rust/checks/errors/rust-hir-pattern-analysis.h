@@ -33,9 +33,9 @@ namespace Analysis {
 
 using namespace HIR;
 
-void
-check_match_usefulness (Resolver::TypeCheckContext *ctx,
-			TyTy::BaseType *scrutinee_ty, HIR::MatchExpr &expr);
+void check_match_usefulness (Resolver::TypeCheckContext *ctx,
+			     TyTy::BaseType *scrutinee_ty,
+			     HIR::MatchExpr &expr);
 
 class PatternChecker : public HIR::HIRFullVisitor
 {
@@ -86,6 +86,8 @@ private:
   virtual void visit (MethodCallExpr &expr) override;
   virtual void visit (FieldAccessExpr &expr) override;
   virtual void visit (BlockExpr &expr) override;
+  virtual void visit (AnonConst &expr) override;
+  virtual void visit (ConstBlock &expr) override;
   virtual void visit (ClosureExpr &expr) override;
   virtual void visit (ContinueExpr &expr) override;
   virtual void visit (BreakExpr &expr) override;

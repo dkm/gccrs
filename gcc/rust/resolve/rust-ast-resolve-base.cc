@@ -232,6 +232,14 @@ ResolverBase::visit (AST::BlockExpr &)
 {}
 
 void
+ResolverBase::visit (AST::AnonConst &)
+{}
+
+void
+ResolverBase::visit (AST::ConstBlock &)
+{}
+
+void
 ResolverBase::visit (AST::ClosureExprInnerTyped &)
 {}
 
@@ -273,6 +281,10 @@ ResolverBase::visit (AST::BoxExpr &)
 
 void
 ResolverBase::visit (AST::ReturnExpr &)
+{}
+
+void
+ResolverBase::visit (AST::TryExpr &)
 {}
 
 void

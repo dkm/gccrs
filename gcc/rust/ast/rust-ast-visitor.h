@@ -104,6 +104,8 @@ public:
   virtual void visit (FieldAccessExpr &expr) = 0;
   virtual void visit (ClosureExprInner &expr) = 0;
   virtual void visit (BlockExpr &expr) = 0;
+  virtual void visit (AnonConst &expr) = 0;
+  virtual void visit (ConstBlock &expr) = 0;
   virtual void visit (ClosureExprInnerTyped &expr) = 0;
   virtual void visit (ContinueExpr &expr) = 0;
   virtual void visit (BreakExpr &expr) = 0;
@@ -114,6 +116,7 @@ public:
   virtual void visit (RangeFromToInclExpr &expr) = 0;
   virtual void visit (RangeToInclExpr &expr) = 0;
   virtual void visit (ReturnExpr &expr) = 0;
+  virtual void visit (TryExpr &expr) = 0;
   virtual void visit (BoxExpr &expr) = 0;
   virtual void visit (UnsafeBlockExpr &expr) = 0;
   virtual void visit (LoopExpr &expr) = 0;
@@ -293,6 +296,8 @@ public:
   virtual void visit (AST::FieldAccessExpr &expr) override;
   virtual void visit (AST::ClosureExprInner &expr) override;
   virtual void visit (AST::BlockExpr &expr) override;
+  virtual void visit (AST::AnonConst &expr) override;
+  virtual void visit (AST::ConstBlock &expr) override;
   virtual void visit (AST::ClosureExprInnerTyped &expr) override;
   virtual void visit (AST::ContinueExpr &expr) override;
   virtual void visit (AST::BreakExpr &expr) override;
@@ -303,6 +308,7 @@ public:
   virtual void visit (AST::RangeFromToInclExpr &expr) override;
   virtual void visit (AST::RangeToInclExpr &expr) override;
   virtual void visit (AST::ReturnExpr &expr) override;
+  virtual void visit (AST::TryExpr &expr) override;
   virtual void visit (AST::BoxExpr &expr) override;
   virtual void visit (AST::UnsafeBlockExpr &expr) override;
   virtual void visit (AST::LoopExpr &expr) override;

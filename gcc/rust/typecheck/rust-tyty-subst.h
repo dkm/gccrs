@@ -51,7 +51,7 @@ public:
   std::string as_string () const;
 
   bool fill_param_ty (SubstitutionArgumentMappings &subst_mappings,
-		      location_t locus);
+		      location_t locus, bool needs_bounds_check = true);
 
   SubstitutionParamMapping clone () const;
 
@@ -60,6 +60,7 @@ public:
   const ParamType *get_param_ty () const;
 
   HIR::TypeParam &get_generic_param ();
+  const HIR::TypeParam &get_generic_param () const;
 
   // this is used for the backend to override the HirId ref of the param to
   // what the concrete type is for the rest of the context

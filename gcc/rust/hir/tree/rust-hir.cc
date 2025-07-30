@@ -577,7 +577,8 @@ UseTreeGlob::as_string () const
       return "*";
     case GLOBAL:
       return "::*";
-      case PATH_PREFIXED: {
+    case PATH_PREFIXED:
+      {
 	std::string path_str = path.as_string ();
 	return path_str + "::*";
       }
@@ -600,7 +601,8 @@ UseTreeList::as_string () const
     case GLOBAL:
       path_str = "::{";
       break;
-      case PATH_PREFIXED: {
+    case PATH_PREFIXED:
+      {
 	path_str = path.as_string () + "::{";
 	break;
       }
@@ -1044,6 +1046,33 @@ BlockExpr::as_string () const
     }
 
   str += "\n" + indent_spaces (out) + "}";
+  return str;
+}
+
+std::string
+AnonConst::as_string () const
+{
+  std::string istr = indent_spaces (enter);
+  std::string str = istr + "AnonConst:\n" + istr;
+
+  str += get_inner_expr ().as_string ();
+
+  str += "\n" + indent_spaces (out);
+
+  return str;
+}
+
+std::string
+ConstBlock::as_string () const
+{
+  std::string istr = indent_spaces (enter);
+
+  std::string str = istr + "ConstBlock:\n" + istr;
+
+  str += get_const_expr ().as_string ();
+
+  str += "\n" + indent_spaces (out);
+
   return str;
 }
 
@@ -2579,9 +2608,9 @@ IdentifierPattern::as_string () const
 
   str += variable_ident.as_string ();
 
-  if (has_pattern_to_bind ())
+  if (has_subpattern ())
     {
-      str += " @ " + to_bind->as_string ();
+      str += " @ " + subpattern->as_string ();
     }
 
   return str;
@@ -4055,6 +4084,18 @@ BlockExpr::accept_vis (HIRFullVisitor &vis)
 }
 
 void
+AnonConst::accept_vis (HIRFullVisitor &vis)
+{
+  vis.visit (*this);
+}
+
+void
+ConstBlock::accept_vis (HIRFullVisitor &vis)
+{
+  vis.visit (*this);
+}
+
+void
 ContinueExpr::accept_vis (HIRFullVisitor &vis)
 {
   vis.visit (*this);
@@ -5022,6 +5063,18 @@ TypeAlias::accept_vis (HIRImplVisitor &vis)
 
 void
 BlockExpr::accept_vis (HIRExpressionVisitor &vis)
+{
+  vis.visit (*this);
+}
+
+void
+AnonConst::accept_vis (HIRExpressionVisitor &vis)
+{
+  vis.visit (*this);
+}
+
+void
+ConstBlock::accept_vis (HIRExpressionVisitor &vis)
 {
   vis.visit (*this);
 }

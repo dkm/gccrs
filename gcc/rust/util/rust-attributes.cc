@@ -95,7 +95,10 @@ static const BuiltinAttrDefinition __definitions[]
 
      {Attrs::FUNDAMENTAL, TYPE_CHECK},
      {Attrs::NON_EXHAUSTIVE, TYPE_CHECK},
-     {Attrs::RUSTFMT, EXTERNAL}};
+     {Attrs::RUSTFMT, EXTERNAL},
+
+     {Attrs::TEST, CODE_GENERATION},
+     {Attrs::SIMD_TEST, CODE_GENERATION}};
 
 BuiltinAttributeMappings *
 BuiltinAttributeMappings::get ()
@@ -221,7 +224,8 @@ check_doc_attribute (const AST::Attribute &attribute)
       break;
       // FIXME: Handle them as well
 
-      case AST::AttrInput::TOKEN_TREE: {
+    case AST::AttrInput::TOKEN_TREE:
+      {
 	// FIXME: This doesn't check for #[doc(alias(...))]
 	const auto &option = static_cast<const AST::DelimTokenTree &> (
 	  attribute.get_attr_input ());

@@ -147,6 +147,8 @@ private:
   virtual void visit (FieldAccessExpr &expr) override final{};
   virtual void visit (ClosureExprInner &expr) override final{};
   virtual void visit (BlockExpr &expr) override final{};
+  virtual void visit (AnonConst &expr) override final{};
+  virtual void visit (ConstBlock &expr) override final{};
   virtual void visit (ClosureExprInnerTyped &expr) override final{};
   virtual void visit (ContinueExpr &expr) override final{};
   virtual void visit (BreakExpr &expr) override final{};
@@ -157,6 +159,7 @@ private:
   virtual void visit (RangeFromToInclExpr &expr) override final{};
   virtual void visit (RangeToInclExpr &expr) override final{};
   virtual void visit (ReturnExpr &expr) override final{};
+  virtual void visit (TryExpr &expr) override final{};
   virtual void visit (BoxExpr &expr) override final{};
   virtual void visit (UnsafeBlockExpr &expr) override final{};
   virtual void visit (LoopExpr &expr) override final{};

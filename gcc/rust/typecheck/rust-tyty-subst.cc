@@ -72,6 +72,12 @@ SubstitutionParamMapping::get_generic_param ()
   return generic;
 }
 
+const HIR::TypeParam &
+SubstitutionParamMapping::get_generic_param () const
+{
+  return generic;
+}
+
 bool
 SubstitutionParamMapping::needs_substitution () const
 {
@@ -109,7 +115,8 @@ SubstitutionParamMapping::need_substitution () const
 
 bool
 SubstitutionParamMapping::fill_param_ty (
-  SubstitutionArgumentMappings &subst_mappings, location_t locus)
+  SubstitutionArgumentMappings &subst_mappings, location_t locus,
+  bool needs_bounds_check)
 {
   SubstitutionArg arg = SubstitutionArg::error ();
   bool ok = subst_mappings.get_argument_for_symbol (get_param_ty (), &arg);
@@ -133,8 +140,7 @@ SubstitutionParamMapping::fill_param_ty (
       rust_debug_loc (locus,
 		      "fill_param_ty bounds_compatible: param %s type %s",
 		      param->get_name ().c_str (), type.get_name ().c_str ());
-
-      if (!param->is_implicit_self_trait ())
+      if (needs_bounds_check && !param->is_implicit_self_trait ())
 	{
 	  if (!param->bounds_compatible (type, locus, true))
 	    return false;
@@ -618,7 +624,6 @@ SubstitutionRef::get_mappings_from_generic_args (
 	  if (args.get_binding_args ().size () > get_num_associated_bindings ())
 	    {
 	      rich_location r (line_table, args.get_locus ());
-
 	      rust_error_at (r,
 			     "generic item takes at most %lu type binding "
 			     "arguments but %lu were supplied",
@@ -702,7 +707,19 @@ SubstitutionRef::get_mappings_from_generic_args (
 	  return SubstitutionArgumentMappings::error ();
 	}
 
-      SubstitutionArg subst_arg (&substitutions.at (offs), resolved);
+      const auto &param_mapping = substitutions.at (offs);
+      const auto &type_param = param_mapping.get_generic_param ();
+      if (type_param.from_impl_trait ())
+	{
+	  rich_location r (line_table, arg->get_locus ());
+	  r.add_fixit_remove (arg->get_locus ());
+	  rust_error_at (r, ErrorCode::E0632,
+			 "cannot provide explicit generic arguments when "
+			 "%<impl Trait%> is used in argument position");
+	  return SubstitutionArgumentMappings::error ();
+	}
+
+      SubstitutionArg subst_arg (&param_mapping, resolved);
       offs++;
       mappings.push_back (std::move (subst_arg));
     }
