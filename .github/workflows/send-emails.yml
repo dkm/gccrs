@@ -115,22 +115,22 @@ jobs:
           # Build cover letter text
           N="${COUNT:-0}"
           TITLE="$(printf '[PATCH 0/%d] PR #%s: %s' "$N" "$PR_NUMBER" "$PR_TITLE")"
+          echo "Some cover" > /tmp/cover.txt
+          #           cat > /tmp/cover.txt <<EOF
+          # PR: $PR_URL
+          # Merged by: ${{ github.actor }}
+          # Base: $PR_BASE_REF
 
-          cat > /tmp/cover.txt <<EOF
-PR: $PR_URL
-Merged by: ${{ github.actor }}
-Base: $PR_BASE_REF
+          # This series was merged into the gccrs repository and is posted here for
+          # upstream visibility and potential drive-by review, as requested by GCC
+          # release managers.
 
-This series was merged into the gccrs repository and is posted here for
-upstream visibility and potential drive-by review, as requested by GCC
-release managers.
+          # Notes:
+          # - Source branch: $(jq -r '.pull_request.head.label' /tmp/gh_event.json)
+          # - Merge commit: $PR_MERGE_COMMIT
+          # - Commit count: $N
 
-Notes:
-- Source branch: $(jq -r '.pull_request.head.label' /tmp/gh_event.json)
-- Merge commit: $PR_MERGE_COMMIT
-- Commit count: $N
-
-EOF
+          # EOF
 
           # If we produced a full series, prepend the generated cover; else send standalone cover
           if [ "$ONLY_COVER" = "0" ]; then
