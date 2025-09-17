@@ -68,12 +68,12 @@ jobs:
         id: commits
         run: |
           # Use the GitHub API via the GITHUB_TOKEN to get the commit SHAs in order
-          set -euo pipefail
-          COMMITS=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            "${{ github.api_url }}/repos/${{ github.repository }}/pulls/$PR_NUMBER/commits" \
-            | jq -r '.[].sha')
-
+          # set -euo pipefail
+          # COMMITS=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          #   -H "Accept: application/vnd.github+json" \
+          #   "${{ github.api_url }}/repos/${{ github.repository }}/pulls/$PR_NUMBER/commits" \
+          #   | jq -r '.[].sha')
+          COMMITS=$(git log --format="%H" "$PR_BASE_REF..HEAD")
           echo "COMMITS<<EOF" >> $GITHUB_ENV
           echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
