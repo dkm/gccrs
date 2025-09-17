@@ -25,6 +25,7 @@ jobs:
           sudo apt-get install -y libauthen-sasl-perl libemail-valid-perl libio-socket-ssl-perl  libmailtools-perl perl libnet-smtp-ssl-perl
           apt-get download git-email
           sudo dpkg -i --force-all git-email*deb
+          git send-email --help
 
       - name: Configure git identity
         run: |
