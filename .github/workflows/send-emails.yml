@@ -35,11 +35,11 @@ jobs:
       - name: Export env
         env:
           GH_EVENT: ${{ toJson(github.event) }}
-          # PR_BASE_REF: ${{ github.sha }}
+          PR_BASE_REF: ${{ github.base.sha }}
         run: |
           echo "$GH_EVENT" > /tmp/gh_event.json
-          PR_BASE_REF=$(jq -r '.pull_request.base.sha' /tmp/gh_event.json)
-          echo "PR_BASE_REF=$PR_BASE_REF" >> $GITHUB_ENV
+          # PR_BASE_REF=$(jq -r '.pull_request.base.sha' /tmp/gh_event.json)
+          # echo "PR_BASE_REF=$PR_BASE_REF" >> $GITHUB_ENV
           PR_NUMBER=$(jq -r '.pull_request.number' /tmp/gh_event.json)
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
           PR_TITLE=$(jq -r '.pull_request.title' /tmp/gh_event.json)
