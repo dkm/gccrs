@@ -74,6 +74,7 @@ jobs:
           #   "${{ github.api_url }}/repos/${{ github.repository }}/pulls/$PR_NUMBER/commits" \
           #   | jq -r '.[].sha')
           COMMITS=$(git log --format="%H" "$PR_BASE_REF..HEAD")
+          git log --format="%H" "$PR_BASE_REF..HEAD"
           echo "COMMITS<<EOF" >> $GITHUB_ENV
           echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
