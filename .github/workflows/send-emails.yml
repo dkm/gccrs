@@ -124,19 +124,19 @@ jobs:
           TITLE="$(printf '[PATCH 0/%d] PR #%s: %s' "$N" "$PR_NUMBER" "$PR_TITLE")"
           echo "Some cover" > /tmp/cover.txt
           #           cat > /tmp/cover.txt <<EOF
-          # PR: $PR_URL
-          # Merged by: ${{ github.actor }}
-          # Base: $PR_TARGET_BRANCH
-
-          # This series was merged into the gccrs repository and is posted here for
-          # upstream visibility and potential drive-by review, as requested by GCC
-          # release managers.
-
-          # Notes:
-          # - Source branch: $(jq -r '.pull_request.head.label' /tmp/gh_event.json)
-          # - Merge commit: $PR_MERGE_COMMIT
-          # - Commit count: $N
-
+          echo "PR: $PR_URL" >> /tmp/cover.txt
+          echo "Merged by: ${{ github.actor }}" >> /tmp/cover.txt
+          echo "Base: $PR_TARGET_BRANCH" >> /tmp/cover.txt
+          echo "" >> /tmp/cover.txt
+          echo "This series was merged into the gccrs repository and is posted here for" >> /tmp/cover.txt
+          echo "upstream visibility and potential drive-by review, as requested by GCC" >>  /tmp/cover.txt
+          echo "release managers." >> /tmp/cover.txt
+          echo "" >> /tmp/cover.txt
+          echo " Notes:" >> /tmp/cover.txt
+          echo " - Source branch: $(jq -r '.pull_request.head.label' /tmp/gh_event.json)" >>  /tmp/cover.txt
+          echo " - Merge commit: $PR_MERGE_COMMIT" >>  /tmp/cover.txt
+          echo " - Commit count: $N" >>  /tmp/cover.txt
+          echo "" >> /tmp/cover.txt
           # EOF
 
           # If we produced a full series, prepend the generated cover; else send standalone cover
