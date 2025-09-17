@@ -35,6 +35,7 @@ jobs:
       - name: Export env
         env:
           GH_EVENT: ${{ toJson(github.event) }}
+          PR_BASE_REF: ${{ github.sha }}
         run: |
           echo "$GH_EVENT" > /tmp/gh_event.json
           PR_NUMBER=$(jq -r '.pull_request.number' /tmp/gh_event.json)
@@ -45,8 +46,8 @@ jobs:
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV
           PR_MERGE_COMMIT=$(jq -r '.pull_request.merge_commit_sha' /tmp/gh_event.json)
           echo "PR_MERGE_COMMIT=$PR_MERGE_COMMIT" >> $GITHUB_ENV
-          PR_BASE_REF=$(jq -r '.pull_request.base.ref' /tmp/gh_event.json)
-          echo "PR_BASE_REF=$PR_BASE_REF" >> $GITHUB_ENV
+          PR_TARGET_BRANCH=$(jq -r '.pull_request.base.ref' /tmp/gh_event.json)
+          echo "PR_TARGET_BRANCH=$PR_TARGET_BRANCH" >> $GITHUB_ENV
           PR_LABELS=$(jq -r '[.pull_request.labels[].name] | join(",")' /tmp/gh_event.json)
           echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
           REPO_SSH=$(jq -r '.repository.ssh_url' /tmp/gh_event.json)
@@ -122,7 +123,7 @@ jobs:
           #           cat > /tmp/cover.txt <<EOF
           # PR: $PR_URL
           # Merged by: ${{ github.actor }}
-          # Base: $PR_BASE_REF
+          # Base: $PR_TARGET_BRANCH
 
           # This series was merged into the gccrs repository and is posted here for
           # upstream visibility and potential drive-by review, as requested by GCC
