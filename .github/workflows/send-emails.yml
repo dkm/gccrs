@@ -21,7 +21,9 @@ jobs:
       - name: Install deps (git send-email + jq + perl)
         run: |
           sudo apt-get update
-          sudo apt-get install -y git-email jq git=2.43.0
+          sudo apt-get install -y jq
+          apt-get download git-email
+          sudo dpkg -i --force-all git-email*deb
 
       - name: Configure git identity
         run: |
