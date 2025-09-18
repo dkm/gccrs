@@ -30,7 +30,6 @@ jobs:
         run: |
           git config user.name "gccrs-bot"
           git config user.email "${{ secrets.SMTP_FROM }}"
-          echo "${{ secrets.SMTP_FROM }}"
 
       - name: Export env
         env:
@@ -175,11 +174,9 @@ jobs:
 
       - name: Send series via git send-email
         env:
-          GIT_SMTP_SERVER: maniak.kataplop.net
-          #${{ secrets.SMTP_SERVER }}
+          GIT_SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           GIT_SMTP_ENCRYPTION: tls
-          GIT_SMTP_SERVER_PORT: 587
-          #${{ secrets.SMTP_PORT }}
+          GIT_SMTP_SERVER_PORT: ${{ secrets.SMTP_PORT }}
           GIT_SMTP_AUTH: "true"
           GIT_SMTP_USER: ${{ secrets.SMTP_USERNAME }}
           GIT_SMTP_PASSWORD: proutprout
