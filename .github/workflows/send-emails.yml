@@ -107,10 +107,31 @@ jobs:
               git cherry-pick --allow-empty -x "$sha"
             done < /tmp/commits.txt
 
+          # Build cover letter text
+          N="${COUNT:-0}"
+          TITLE="$(printf '[PATCH 0/%d] PR #%s: %s' "$N" "$PR_NUMBER" "$PR_TITLE")"
+          #           cat > /tmp/cover.txt <<EOF
+          echo "PR: $PR_URL" > /tmp/description.txt
+          echo "Merged by: ${{ github.actor }}" >> /tmp/description.txt
+          echo "Base: $PR_TARGET_BRANCH" >> /tmp/description.txt
+          echo "" >> /tmp/description.txt
+          echo "This series was merged into the gccrs repository and is posted here for" >> /tmp/description.txt
+          echo "upstream visibility and potential drive-by review, as requested by GCC" >>  /tmp/description.txt
+          echo "release managers." >> /tmp/description.txt
+          echo "" >> /tmp/description.txt
+          echo " Notes:" >> /tmp/description.txt
+          echo " - Source branch: $(jq -r '.pull_request.head.label' /tmp/gh_event.json)" >>  /tmp/description.txt
+          echo " - Merge commit: $PR_MERGE_COMMIT" >>  /tmp/description.txt
+          echo " - Commit count: $N" >>  /tmp/description.txt
+          echo "" >> /tmp/description.txt
+          # EOF
+
             # Generate series + cover letter
             git format-patch \
               --stdout \
+              --subject-prefix="gccrs COMMIT"
               --cover-letter \
+              --description-file=/tmp/description.txt
               --base="$PR_BASE_REF" \
               -n \
               "$PR_BASE_REF"..HEAD > /tmp/series.mbox
@@ -119,56 +140,38 @@ jobs:
             : > /tmp/series.mbox
           fi
 
-          # Build cover letter text
-          N="${COUNT:-0}"
-          TITLE="$(printf '[PATCH 0/%d] PR #%s: %s' "$N" "$PR_NUMBER" "$PR_TITLE")"
-          echo "Some cover" > /tmp/cover.txt
-          #           cat > /tmp/cover.txt <<EOF
-          echo "PR: $PR_URL" >> /tmp/cover.txt
-          echo "Merged by: ${{ github.actor }}" >> /tmp/cover.txt
-          echo "Base: $PR_TARGET_BRANCH" >> /tmp/cover.txt
-          echo "" >> /tmp/cover.txt
-          echo "This series was merged into the gccrs repository and is posted here for" >> /tmp/cover.txt
-          echo "upstream visibility and potential drive-by review, as requested by GCC" >>  /tmp/cover.txt
-          echo "release managers." >> /tmp/cover.txt
-          echo "" >> /tmp/cover.txt
-          echo " Notes:" >> /tmp/cover.txt
-          echo " - Source branch: $(jq -r '.pull_request.head.label' /tmp/gh_event.json)" >>  /tmp/cover.txt
-          echo " - Merge commit: $PR_MERGE_COMMIT" >>  /tmp/cover.txt
-          echo " - Commit count: $N" >>  /tmp/cover.txt
-          echo "" >> /tmp/cover.txt
-          # EOF
+          awk -v CONTENT="$PR_TITLE" '{gsub(/\*\*\* SUBJECT HERE \*\*\*/, CONTENT); print}' /tmp/series.mbox > /tmp/final_series.mbox
 
           # If we produced a full series, prepend the generated cover; else send standalone cover
-          if [ "$ONLY_COVER" = "0" ]; then
-            # Replace the auto cover letter body with ours but keep threading headers
-            # Extract first message (=cover) and replace its body
-            awk '
-              BEGIN{RS="^From "; ORS="From "; first=1}
-              NR==1{print $0 > "/tmp/cover_raw.mbox"; next}
-              {print "From " $0 >> "/tmp/series_without_cover.mbox"}
-            ' /tmp/series.mbox
+          # if [ "$ONLY_COVER" = "0" ]; then
+          #   # Replace the auto cover letter body with ours but keep threading headers
+          #   # Extract first message (=cover) and replace its body
+          #   awk '
+          #     BEGIN{RS="^From "; ORS="From "; first=1}
+          #     NR==1{print $0 > "/tmp/cover_raw.mbox"; next}
+          #     {print "From " $0 >> "/tmp/series_without_cover.mbox"}
+          #   ' /tmp/series.mbox
 
-            # Rebuild cover with our body
-            {
-              # Print the first message headers up to the first empty line
-              awk 'BEGIN{print "From " $0} $0=="" && ++n==1{exit} {print}' /tmp/cover_raw.mbox
-              echo
-              cat /tmp/cover.txt
-            } > /tmp/cover_final.mbox
+          #   # Rebuild cover with our body
+          #   {
+          #     # Print the first message headers up to the first empty line
+          #     awk 'BEGIN{print "From " $0} $0=="" && ++n==1{exit} {print}' /tmp/cover_raw.mbox
+          #     echo
+          #     cat /tmp/cover.txt
+          #   } > /tmp/cover_final.mbox
 
-            # Concatenate cover + rest
-            cat /tmp/cover_final.mbox /tmp/series_without_cover.mbox > /tmp/final_series.mbox
-          else
-            # Create a single RFC-style email
-            {
-              echo "From nobody $(date -R)"
-              echo "From: ${{ secrets.SMTP_FROM }}"
-              echo "Subject: $TITLE"
-              echo
-              cat /tmp/cover.txt
-            } > /tmp/final_series.mbox
-          fi
+          #   # Concatenate cover + rest
+          #   cat /tmp/cover_final.mbox /tmp/series_without_cover.mbox > /tmp/final_series.mbox
+          # else
+          #   # Create a single RFC-style email
+          #   {
+          #     echo "From nobody $(date -R)"
+          #     echo "From: ${{ secrets.SMTP_FROM }}"
+          #     echo "Subject: $TITLE"
+          #     echo
+          #     cat /tmp/cover.txt
+          #   } > /tmp/final_series.mbox
+          # fi
 
       - name: Send series via git send-email
         env:
