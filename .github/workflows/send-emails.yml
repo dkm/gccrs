@@ -28,7 +28,7 @@ jobs:
 
       - name: Configure git identity
         run: |
-          git config user.name "gccrs-bot"
+          git config user.name "gccrs gerris bot"
           git config user.email "${{ secrets.SMTP_FROM }}"
 
       - name: Export env
@@ -179,12 +179,9 @@ jobs:
           GIT_SMTP_SERVER_PORT: ${{ secrets.SMTP_PORT }}
           GIT_SMTP_AUTH: "true"
           GIT_SMTP_USER: ${{ secrets.SMTP_USERNAME }}
-          GIT_SMTP_PASSWORD: proutprout
-          ##${{ secrets.SMTP_PASSWORD }}
-          FROM: gerris@kataplop.net
-          #${{ secrets.SMTP_FROM }}
-          TO: dkm+gerris@kataplop.net
-          # ${{ secrets.PATCH_TO }}
+          GIT_SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FROM: ${{ secrets.SMTP_FROM }}
+          TO: ${{ secrets.PATCH_TO }}
           CC: ${{ secrets.PATCH_CC }}
         run: |
           set -euo pipefail
