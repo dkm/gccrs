@@ -18,11 +18,20 @@ jobs:
         with:
           fetch-depth: 100
 
-      - name: Install deps (git send-email + jq + perl)
+      - name: Install deps (git send-email and jq)
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
-          sudo apt-get install -y libauthen-sasl-perl libemail-valid-perl libio-socket-ssl-perl  libmailtools-perl perl libnet-smtp-ssl-perl
+
+          ## GHA images have a special git package that conflicts with
+          ## git-send-email So this is a workaround to force the installation of
+          ## the conflicting package.
+          sudo apt-get install -y libauthen-sasl-perl \
+            libemail-valid-perl \
+            libio-socket-ssl-perl \
+            libmailtools-perl perl \
+            libnet-smtp-ssl-perl
+
           apt-get download git-email
           sudo dpkg -i --force-all git-email*deb
 
@@ -34,35 +43,62 @@ jobs:
       - name: Export env
         env:
           GH_EVENT: ${{ toJson(github.event) }}
-          #PR_BASE_REF: ${{ github.base.sha }}
         run: |
           echo "$GH_EVENT" > /tmp/gh_event.json
+
           PR_BASE_REF=$(jq -r '.pull_request.base.sha' /tmp/gh_event.json)
           echo "PR_BASE_REF=$PR_BASE_REF" >> $GITHUB_ENV
+
           PR_NUMBER=$(jq -r '.pull_request.number' /tmp/gh_event.json)
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
           PR_TITLE=$(jq -r '.pull_request.title' /tmp/gh_event.json)
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
+
           PR_URL=$(jq -r '.pull_request.html_url' /tmp/gh_event.json)
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+
           PR_MERGE_COMMIT=$(jq -r '.pull_request.merge_commit_sha' /tmp/gh_event.json)
           echo "PR_MERGE_COMMIT=$PR_MERGE_COMMIT" >> $GITHUB_ENV
+
           PR_TARGET_BRANCH=$(jq -r '.pull_request.base.ref' /tmp/gh_event.json)
           echo "PR_TARGET_BRANCH=$PR_TARGET_BRANCH" >> $GITHUB_ENV
+
           PR_LABELS=$(jq -r '[.pull_request.labels[].name] | join(",")' /tmp/gh_event.json)
           echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
+
           REPO_SSH=$(jq -r '.repository.ssh_url' /tmp/gh_event.json)
           echo "REPO_SSH=$REPO_SSH" >> $GITHUB_ENV
+
           echo "SERIES_DIR=/tmp/series" >> $GITHUB_ENV
 
       - name: Respect opt-outs / guardrails
         run: |
-          # Skip if PR has label "no-ml" or "draft"
+          # Skip if PR has label "no-ml"
           if echo "$PR_LABELS" | grep -qiE "(^|,)no-ml(,|$)"; then
             echo "Opt-out label present: skipping mailing list." ; exit 0
           fi
-          if jq -e '.pull_request.draft == true' /tmp/gh_event.json >/dev/null; then
-            echo "PR is draft: skipping mailing list." ; exit 0
+
+          patterns=(".github/"
+            "CODE_OF_CONDUCT.md"
+            "CONTRIBUTING.md"
+            "Dockerfile"
+            "README.md"
+            "logo.png"
+            "gcc/rust/gource-gccrs.sh"
+            "gcc/rust/monthly-diff.py"
+          )
+
+          # escape regex metacharacters in one pipeline
+          escape() {
+             printf '%s\n' "$@" | sed -E 's/([][.^$*+?(){}|\\-])/\\\1/g'
+          }
+
+          # produce alternation in a variable
+          regex="($(escape "${patterns[@]}" | paste -sd'|'))"
+          if grep -E "$regex" <(git diff --name-status $PR_BASE_REF..HEAD); then
+             echo "Touching something not to be upstreamed, skipping"
+             exit 0
           fi
 
       - name: Get commit list from PR
