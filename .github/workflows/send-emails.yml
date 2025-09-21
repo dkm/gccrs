@@ -53,6 +53,7 @@ jobs:
           echo "PR_LABELS=$PR_LABELS" >> $GITHUB_ENV
           REPO_SSH=$(jq -r '.repository.ssh_url' /tmp/gh_event.json)
           echo "REPO_SSH=$REPO_SSH" >> $GITHUB_ENV
+          echo "SERIES_DIR=/tmp/series" >> $GITHUB_ENV
 
       - name: Respect opt-outs / guardrails
         run: |
@@ -95,7 +96,6 @@ jobs:
       - name: Prepare patch series
         run: |
           set -euo pipefail
-          rm -rf /tmp/patches && mkdir -p /tmp/patches
           echo "${COMMITS}" | tr ' ' '\n' > /tmp/commits.txt
 
           if [ "$ONLY_COVER" = "0" ]; then
@@ -125,21 +125,23 @@ jobs:
           echo "" >> /tmp/description.txt
           # EOF
 
+          mkdir /tmp/series
+
             # Generate series + cover letter
             git format-patch \
-              --stdout \
               --subject-prefix="gccrs COMMIT" \
               --cover-letter \
               --description-file=/tmp/description.txt \
               --base="$PR_BASE_REF" \
-              -n \
-              "$PR_BASE_REF"..HEAD > /tmp/series.mbox
+              --output-directory /tmp/series \
+              "$PR_BASE_REF"..HEAD
           else
             # Cover letter only
             : > /tmp/series.mbox
           fi
 
-          awk -v CONTENT="$PR_TITLE" '{gsub(/\*\*\* SUBJECT HERE \*\*\*/, CONTENT); print}' /tmp/series.mbox > /tmp/final_series.mbox
+          awk -v CONTENT="$PR_TITLE" '{gsub(/\*\*\* SUBJECT HERE \*\*\*/, CONTENT); print}'  /tmp/series/0000-cover-letter.patch > /tmp/temp
+          mv /tmp/temp /tmp/series/0000-cover-letter.patch
 
           # If we produced a full series, prepend the generated cover; else send standalone cover
           # if [ "$ONLY_COVER" = "0" ]; then
@@ -198,4 +200,4 @@ jobs:
           git config sendemail.confirm "never"
           git config sendemail.annotate "false"
 
-          git send-email /tmp/final_series.mbox
+          git send-email /tmp/series/*
