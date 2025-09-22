@@ -40,7 +40,7 @@ jobs:
           git config user.name "gccrs gerris bot"
           git config user.email "${{ secrets.SMTP_FROM }}"
 
-      - name: Export env
+      - name: Extract PR info and export env
         env:
           GH_EVENT: ${{ toJson(github.event) }}
         run: |
@@ -54,6 +54,8 @@ jobs:
 
           PR_TITLE=$(jq -r '.pull_request.title' /tmp/gh_event.json)
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
+
+          jq -r '.pull_request.body' /tmp/gh_event.json > /tmp/pr_body.md
 
           PR_URL=$(jq -r '.pull_request.html_url' /tmp/gh_event.json)
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV
@@ -150,6 +152,9 @@ jobs:
           echo " - Source branch: $(jq -r '.pull_request.head.label' /tmp/gh_event.json)" >>  /tmp/description.txt
           echo " - Merge commit: $PR_MERGE_COMMIT" >>  /tmp/description.txt
           echo " - Commit count: $N" >>  /tmp/description.txt
+          echo "" >> /tmp/description.txt
+          echo "Original change description:" >> /tmp/description.txt
+          cat /tmp/pr_body.md >> /tmp/description.txt
           echo "" >> /tmp/description.txt
 
           mkdir /tmp/series
