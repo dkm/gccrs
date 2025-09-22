@@ -123,29 +123,31 @@ jobs:
         run: |
           MAX=150
           if [ "${COUNT:-0}" -gt "$MAX" ]; then
-            echo "Series has $COUNT commits (> $MAX). Sending cover letter only." >> $GITHUB_STEP_SUMMARY
-            echo "ONLY_COVER=1" >> $GITHUB_ENV
+            echo "Series has $COUNT commits (> $MAX). Not doing anything" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else if [ "${COUNT:-1}" -eq 0 ]; then
+            echo "Single commit PR, don't do the cover letter"
+            echo "DO_COVER=0" >> $GITHUB_ENV
           else
-            echo "ONLY_COVER=0" >> $GITHUB_ENV
-          fi
+            echo "DO_COVER=1" >> $GITHUB_ENV
+          fi fi
 
       - name: Prepare patch series
         run: |
           set -euo pipefail
           echo "${COMMITS}" | tr ' ' '\n' > /tmp/commits.txt
 
-          if [ "$ONLY_COVER" = "0" ]; then
-            # Create a temporary branch that linearizes the PR commits
-            git checkout -B ci-mail-patches "$PR_BASE_REF"
-            # Cherry-pick commits in the exact PR order (no-commit to batch, then commit)
-            while read sha; do
-              git cherry-pick --allow-empty -x "$sha"
-            done < /tmp/commits.txt
+          # Create a temporary branch that linearizes the PR commits
+          git checkout -B ci-mail-patches "$PR_BASE_REF"
+          # Cherry-pick commits in the exact PR order (no-commit to batch, then commit)
+          while read sha; do
+            git cherry-pick --allow-empty -x "$sha"
+          done < /tmp/commits.txt
 
           # Build cover letter text
           N="${COUNT:-0}"
           TITLE="$(printf '[PATCH 0/%d] PR #%s: %s' "$N" "$PR_NUMBER" "$PR_TITLE")"
-          #           cat > /tmp/cover.txt <<EOF
+
           echo "PR: $PR_URL" > /tmp/description.txt
           echo "Merged by: ${{ github.actor }}" >> /tmp/description.txt
           echo "Base: $PR_TARGET_BRANCH" >> /tmp/description.txt
@@ -159,56 +161,33 @@ jobs:
           echo " - Merge commit: $PR_MERGE_COMMIT" >>  /tmp/description.txt
           echo " - Commit count: $N" >>  /tmp/description.txt
           echo "" >> /tmp/description.txt
-          # EOF
 
           mkdir /tmp/series
 
+          if [ "$DO_COVER" = "1" ]; then
             # Generate series + cover letter
             git format-patch \
-              --subject-prefix="gccrs COMMIT" \
-              --cover-letter \
-              --description-file=/tmp/description.txt \
-              --base="$PR_BASE_REF" \
-              --output-directory /tmp/series \
-              "$PR_BASE_REF"..HEAD
+                --subject-prefix="gccrs COMMIT" \
+                --cover-letter \
+                --description-file=/tmp/description.txt \
+                --base="$PR_BASE_REF" \
+                --output-directory /tmp/series \
+                "$PR_BASE_REF"..HEAD
+
+            awk -v CONTENT="$PR_TITLE" '{gsub(/\*\*\* SUBJECT HERE \*\*\*/, CONTENT); print}' /tmp/series/0000-cover-letter.patch > /tmp/temp
+            mv /tmp/temp /tmp/series/0000-cover-letter.patch
           else
-            # Cover letter only
-            : > /tmp/series.mbox
+            # Generate series + cover letter
+            git format-patch \
+                --subject-prefix="gccrs COMMIT" \
+                --no-cover-letter \
+                --base="$PR_BASE_REF" \
+                --output-directory /tmp/series \
+                "$PR_BASE_REF"..HEAD
+
+            # for every patch file, insert the github header right after the '---'.
+            sed '/^---$/ r /tmp/description.txt' -i /tmp/series/*
           fi
-
-          awk -v CONTENT="$PR_TITLE" '{gsub(/\*\*\* SUBJECT HERE \*\*\*/, CONTENT); print}'  /tmp/series/0000-cover-letter.patch > /tmp/temp
-          mv /tmp/temp /tmp/series/0000-cover-letter.patch
-
-          # If we produced a full series, prepend the generated cover; else send standalone cover
-          # if [ "$ONLY_COVER" = "0" ]; then
-          #   # Replace the auto cover letter body with ours but keep threading headers
-          #   # Extract first message (=cover) and replace its body
-          #   awk '
-          #     BEGIN{RS="^From "; ORS="From "; first=1}
-          #     NR==1{print $0 > "/tmp/cover_raw.mbox"; next}
-          #     {print "From " $0 >> "/tmp/series_without_cover.mbox"}
-          #   ' /tmp/series.mbox
-
-          #   # Rebuild cover with our body
-          #   {
-          #     # Print the first message headers up to the first empty line
-          #     awk 'BEGIN{print "From " $0} $0=="" && ++n==1{exit} {print}' /tmp/cover_raw.mbox
-          #     echo
-          #     cat /tmp/cover.txt
-          #   } > /tmp/cover_final.mbox
-
-          #   # Concatenate cover + rest
-          #   cat /tmp/cover_final.mbox /tmp/series_without_cover.mbox > /tmp/final_series.mbox
-          # else
-          #   # Create a single RFC-style email
-          #   {
-          #     echo "From nobody $(date -R)"
-          #     echo "From: ${{ secrets.SMTP_FROM }}"
-          #     echo "Subject: $TITLE"
-          #     echo
-          #     cat /tmp/cover.txt
-          #   } > /tmp/final_series.mbox
-          # fi
 
       - name: Send series via git send-email
         env:
