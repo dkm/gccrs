@@ -109,13 +109,13 @@ jobs:
           done
           echo "COUNT=$COUNT" >> $GITHUB_ENV
 
-      - name: Limit very large series
+      - name: Check what to do based on series' size
         run: |
           MAX=150
-          if [ "${COUNT:-0}" -gt "$MAX" ]; then
+          if [ "${COUNT}" -gt "$MAX" ]; then
             echo "Series has $COUNT commits (> $MAX). Not doing anything" >> $GITHUB_STEP_SUMMARY
             exit 0
-          else if [ "${COUNT:-1}" -eq 0 ]; then
+          else if [ "${COUNT}" -eq 1 ]; then
             echo "Single commit PR, don't do the cover letter"
             echo "DO_COVER=0" >> $GITHUB_ENV
           else
