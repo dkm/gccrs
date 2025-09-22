@@ -55,6 +55,9 @@ jobs:
           PR_TITLE=$(jq -r '.pull_request.title' /tmp/gh_event.json)
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
 
+          PR_BODY=$(jq -r '.pull_request.body' /tmp/gh_event.json)
+          echo "PR_BODY=$PR_BODY" >> $GITHUB_ENV
+
           PR_URL=$(jq -r '.pull_request.html_url' /tmp/gh_event.json)
           echo "PR_URL=$PR_URL" >> $GITHUB_ENV
 
@@ -150,6 +153,9 @@ jobs:
           echo " - Source branch: $(jq -r '.pull_request.head.label' /tmp/gh_event.json)" >>  /tmp/description.txt
           echo " - Merge commit: $PR_MERGE_COMMIT" >>  /tmp/description.txt
           echo " - Commit count: $N" >>  /tmp/description.txt
+          echo "" >> /tmp/description.txt
+          echo "Original change description:" >> /tmp/description.txt
+          echo "$PR_BODY" >> /tmp/description.txt
           echo "" >> /tmp/description.txt
 
           mkdir /tmp/series
