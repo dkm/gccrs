@@ -72,13 +72,19 @@ jobs:
 
           echo "SERIES_DIR=/tmp/series" >> $GITHUB_ENV
 
-      - name: Respect opt-outs / guardrails
+      - name: Check for label 'no-ml' to skip sending emails
         run: |
           # Skip if PR has label "no-ml"
           if echo "$PR_LABELS" | grep -qiE "(^|,)no-ml(,|$)"; then
-            echo "Opt-out label present: skipping mailing list." ; exit 0
+            echo "Opt-out label present: skipping mailing list."
+            echo "Opt-out label present: skipping mailing list." > $GITHUB_STEP_SUMMARY
+            exit 0
           fi
 
+      - name: Get commit list from PR and skip the internal ones
+        id: commits
+        run: |
+          # Skip commits that touches any of these
           patterns=(".github/"
             "CODE_OF_CONDUCT.md"
             "CONTRIBUTING.md"
@@ -90,36 +96,26 @@ jobs:
           )
           regex=$(printf '%s\n' "${patterns[@]}" | sed -e 's/[.[\*^$+?(){|\/\\]/\\&/g' | paste -sd'|' -)
 
-          if grep -q -E "$regex" <(git diff --name-status $PR_BASE_REF..HEAD); then
-             echo "Touching something not to be upstreamed, skipping"
-             exit 0
-          fi
+          rm -f /tmp/commits.txt
 
-      - name: Get commit list from PR
-        id: commits
-        run: |
-          # Use the GitHub API via the GITHUB_TOKEN to get the commit SHAs in order
-          # set -euo pipefail
-          # COMMITS=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          #   -H "Accept: application/vnd.github+json" \
-          #   "${{ github.api_url }}/repos/${{ github.repository }}/pulls/$PR_NUMBER/commits" \
-          #   | jq -r '.[].sha')
-          COMMITS=$(git log --format="%H" "$PR_BASE_REF..HEAD")
-          git log --format="%H" "$PR_BASE_REF..HEAD"
-          echo "COMMITS<<EOF" >> $GITHUB_ENV
-          echo "$COMMITS" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          git log --format="%H" "$PR_BASE_REF..HEAD" | while read SHA1; do
+               if grep -q -E "$regex" <(git diff-tree --no-commit-id --name-only -r "$SHA1"); then
+                echo "Touching something not to be upstreamed, skipping commit $SHA1"
+             else
+                echo "$SHA1" >> /tmp/commits.txt
+             fi
+          done
 
-          COUNT=$(echo "$COMMITS" | wc -w | tr -d ' ')
+          COUNT=$(wc -l /tmp/commits.txt)
           echo "COUNT=$COUNT" >> $GITHUB_ENV
 
-      - name: Limit very large series
+      - name: Check what to do based on series' size
         run: |
           MAX=150
-          if [ "${COUNT:-0}" -gt "$MAX" ]; then
+          if [ "${COUNT}" -gt "$MAX" ]; then
             echo "Series has $COUNT commits (> $MAX). Not doing anything" >> $GITHUB_STEP_SUMMARY
             exit 0
-          else if [ "${COUNT:-1}" -eq 0 ]; then
+          else if [ "${COUNT}" -eq 1 ]; then
             echo "Single commit PR, don't do the cover letter"
             echo "DO_COVER=0" >> $GITHUB_ENV
           else
@@ -130,7 +126,6 @@ jobs:
       - name: Prepare patch series
         run: |
           set -euo pipefail
-          echo "${COMMITS}" | tr ' ' '\n' > /tmp/commits.txt
 
           # Create a temporary branch that linearizes the PR commits
           git checkout -B ci-mail-patches "$PR_BASE_REF"
