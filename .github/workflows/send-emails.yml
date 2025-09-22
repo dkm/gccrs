@@ -79,6 +79,17 @@ jobs:
             echo "Opt-out label present: skipping mailing list." ; exit 0
           fi
 
+      - name: Get commit list from PR
+        id: commits
+        run: |
+          # Use the GitHub API via the GITHUB_TOKEN to get the commit SHAs in order
+          # set -euo pipefail
+          # COMMITS=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          #   -H "Accept: application/vnd.github+json" \
+          #   "${{ github.api_url }}/repos/${{ github.repository }}/pulls/$PR_NUMBER/commits" \
+          #   | jq -r '.[].sha')
+          COMMITS=$(git log --format="%H" "$PR_BASE_REF..HEAD")
+
           patterns=(".github/"
             "CODE_OF_CONDUCT.md"
             "CONTRIBUTING.md"
@@ -90,27 +101,18 @@ jobs:
           )
           regex=$(printf '%s\n' "${patterns[@]}" | sed -e 's/[.[\*^$+?(){|\/\\]/\\&/g' | paste -sd'|' -)
 
-          if grep -q -E "$regex" <(git diff --name-status $PR_BASE_REF..HEAD); then
-             echo "Touching something not to be upstreamed, skipping"
-             exit 0
-          fi
-
-      - name: Get commit list from PR
-        id: commits
-        run: |
-          # Use the GitHub API via the GITHUB_TOKEN to get the commit SHAs in order
-          # set -euo pipefail
-          # COMMITS=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          #   -H "Accept: application/vnd.github+json" \
-          #   "${{ github.api_url }}/repos/${{ github.repository }}/pulls/$PR_NUMBER/commits" \
-          #   | jq -r '.[].sha')
-          COMMITS=$(git log --format="%H" "$PR_BASE_REF..HEAD")
-          git log --format="%H" "$PR_BASE_REF..HEAD"
+          COUNT=0
           echo "COMMITS<<EOF" >> $GITHUB_ENV
+          git log --format="%H" "$PR_BASE_REF..HEAD" | while read SHA1; do
+            if grep -q -E "$regex" <(git diff-tree --no-commit-id --name-only -r "$SHA1"); then
+             echo "Touching something not to be upstreamed, skipping commit $SHA1"
+          else
+             echo "SHA1" >> $GITHUB_ENV
+             COUNT=$(($COUNT+1))
+          fi
           echo "$COMMITS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-          COUNT=$(echo "$COMMITS" | wc -w | tr -d ' ')
           echo "COUNT=$COUNT" >> $GITHUB_ENV
 
       - name: Limit very large series
