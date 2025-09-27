@@ -97,8 +97,13 @@ jobs:
           regex=$(printf '%s\n' "${patterns[@]}" | sed -e 's/[.[\*^$+?(){|\/\\]/\\&/g' | paste -sd'|' -)
 
           rm -f /tmp/commits.txt
+
+          git fetch origin "pull/$PR_NUMBER/head"
+
           git log --reverse --format="%H" "$PR_BASE_REF..HEAD" | while read SHA1; do
-               if grep -q -E "$regex" <(git diff-tree --no-commit-id --name-only -r "$SHA1"); then
+
+          gh api repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/commits | while read SHA1; do
+             if grep -q -E "$regex" <(git diff-tree --no-commit-id --name-only -r "$SHA1"); then
                 echo "Touching something not to be upstreamed, skipping commit $SHA1"
              else
                 echo "$SHA1" >> /tmp/commits.txt
