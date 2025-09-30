@@ -75,15 +75,19 @@ jobs:
           echo "SERIES_DIR=/tmp/series" >> $GITHUB_ENV
 
       - name: Check for label 'no-ml' to skip sending emails
+        id: checklabel
         run: |
           # Skip if PR has label "no-ml"
           if echo "$PR_LABELS" | grep -qiE "(^|,)no-ml(,|$)"; then
             echo "Opt-out label present: skipping mailing list." | tee $GITHUB_STEP_SUMMARY
-            exit 0
+            echo "skip_sending=1" >> $GITHUB_OUTPUT
+          else
+            echo "skip_sending=0" >> $GITHUB_OUTPUT
           fi
 
       - name: Get commit list from PR and skip the internal ones
         id: commits
+        if: ${{ steps.checklabel.skip_sending != '0' }}
         run: |
           # Skip commits that touches any of these
           patterns=(".github/"
@@ -113,21 +117,27 @@ jobs:
 
           if [ ! -f /tmp/commits.txt ]; then
             echo "No commits to send email for" | tee $GITHUB_STEP_SUMMARY
+            echo "skip_sending=1" >> $GITHUB_OUTPUT
             exit 0
           fi
 
+          echo "skip_sending=0" >> $GITHUB_OUTPUT
           COUNT=$(wc -l < /tmp/commits.txt)
           echo "COUNT=$COUNT" >> $GITHUB_ENV
 
       - name: Check what to do based on series' size
+        if: ${{ steps.commits.skip_sending != '0' }}
+        id: checksize
         run: |
           MAX=150
           if [ "${COUNT}" -gt "$MAX" ]; then
             echo "Series has $COUNT commits (> $MAX). Not doing anything" | tee  $GITHUB_STEP_SUMMARY
-            exit 0
+            echo "skip_sending=1" >> $GITHUB_OUTPUT
           fi
+          echo "skip_sending=0" >> $GITHUB_OUTPUT
 
       - name: Prepare patch series
+        if: ${{ steps.checksize.skip_sending != '0' }}
         run: |
           set -euo pipefail
 
