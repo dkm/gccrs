@@ -1,6 +1,8 @@
 /* lang-specs.h -- gcc driver specs for Rust frontend.
    Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
+   Introduce TYPO.
+
    This file is part of GCC.
 
    GCC is free software; you can redistribute it and/or modify it under
