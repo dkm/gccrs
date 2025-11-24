@@ -220,7 +220,14 @@ jobs:
              echo ""
 
              cp /tmp/description.txt "/tmp/tmp_descr.txt"
-             echo "Commit on github: https://github.com/rust-GCC/gccrs/commit/$SHA1" >> "/tmp/tmp_descr.txt"
+             echo "Commit on github: https://github.com/rust-GCC/gccrs/commit/$SHA1" >> /tmp/tmp_descr.txt
+
+             echo "" >> /tmp/tmp_descr.txt
+             echo "The commit has been mentionned in the following pull-request(s):" >> /tmp/tmp_descr.txt
+             gh api "repos/Rust-GCC/gccrs/commits/$SHA1/pulls" | \
+               jq '.[].html_url' | \
+               tr -d '"' | \
+               sed 's/^/ - /'>> /tmp/tmp_descr.txt
 
              # insert the github header right after the '---'.
              sed '/^---$/ r /tmp/tmp_descr.txt' -i "$f"
