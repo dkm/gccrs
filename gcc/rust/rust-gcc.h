@@ -22,6 +22,9 @@
 // This has to be included outside of extern "C", so we have to
 // include it here before tree.h includes it later.
 
+TEST
+
+
 #ifndef RUST_GCC
 #define RUST_GCC
 
